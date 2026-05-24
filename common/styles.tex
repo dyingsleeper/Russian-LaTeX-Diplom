@@ -5,7 +5,7 @@
                                 % \DeclareRobustCommand protects \fixme
                                 % from expanding inside \MakeUppercase
 \AtBeginDocument{%
-    \setlength{\parindent}{2.5em}                   % Абзацный отступ. Должен быть одинаковым по всему тексту и равен пяти знакам (ГОСТ Р 7.0.11-2011, 5.3.7).
+    \setlength{\parindent}{1.25cm}                  % Абзацный отступ по правилам оформления ВКР.
 }
 
 %%% Таблицы %%%
@@ -178,9 +178,9 @@
     citecolor={citecolor},      % цвет ссылок-цитат
     urlcolor={urlcolor},        % цвет гиперссылок
 %    hidelinks,                  % Hide links (removing color and border)
-    pdftitle={\thesisTitle},    % Заголовок
-    pdfauthor={\thesisAuthor},  % Автор
-    pdfsubject={\thesisSpecialtyNumber\ \thesisSpecialtyTitle},      % Тема
+    pdftitle={\documentPdfTitle},    % Заголовок
+    pdfauthor={\documentPdfAuthor},  % Автор
+    pdfsubject={\documentPdfSubject},      % Тема
 %    pdfcreator={Создатель},     % Создатель, Приложение
 %    pdfproducer={Производитель},% Производитель, Производитель PDF
     pdfkeywords={\keywords},    % Ключевые слова

@@ -59,7 +59,8 @@
 
 %%% Структура диссертации (ГОСТ Р 7.0.11-2011, 4)
 \include{Dissertation/title}           % Титульный лист
-\include{Dissertation/contents}        % Оглавление
+\include{Dissertation/task}            % Лист задания
+\include{Dissertation/contents}        % Содержание
 \ifnumequal{\value{contnumfig}}{1}{}{\counterwithout{figure}{chapter}}
 \ifnumequal{\value{contnumtab}}{1}{}{\counterwithout{table}{chapter}}
 \include{Dissertation/introduction}    % Введение
@@ -71,10 +72,10 @@
 \include{Dissertation/part2}           % Глава 2
 \include{Dissertation/part3}           % Глава 3
 \include{Dissertation/conclusion}      % Заключение
-\include{Dissertation/acronyms}        % Список сокращений и условных обозначений
-\include{Dissertation/dictionary}      % Словарь терминов
+% При необходимости можно включить дополнительные структурные части:
+%\include{Dissertation/acronyms}        % Список сокращений и условных обозначений
+%\include{Dissertation/dictionary}      % Словарь терминов
 \include{Dissertation/references}      % Список литературы
-\include{Dissertation/lists}           % Списки таблиц и изображений (иллюстративный материал)
 
 \setcounter{totalchapter}{\value{chapter}} % Подсчёт количества глав
 

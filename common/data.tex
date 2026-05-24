@@ -121,3 +121,58 @@
 % To avoid conflict with beamer class use \providecommand
 \providecommand{\keywords}%            % Ключевые слова для метаданных PDF диссертации и автореферата
 {}
+
+%%% Данные выпускной квалификационной работы %%%
+\newcommand{\vkrMinistry}{Министерство науки и высшего образования Российской Федерации}
+\newcommand{\vkrUniversity}{Федеральное государственное автономное образовательное учреждение высшего образования <<Волгоградский государственный университет>>}
+\newcommand{\vkrInstitute}{институт Математики и информационных технологий}
+\newcommand{\vkrDepartment}{кафедра Фундаментальной информатики и искусственного интеллекта}
+\newcommand{\vkrDepartmentShort}{ФИИИ}
+\newcommand{\vkrDepartmentHeadTitle}{Зав. каф. \vkrDepartmentShort}
+\newcommand{\vkrDepartmentHeadDegree}{д.ф.-м.н., профессор}
+\newcommand{\vkrDepartmentHead}{Воронин Александр Александрович}
+\newcommand{\vkrDepartmentHeadShort}{А.\,А.~Воронин}
+\newcommand{\vkrStudentFullName}{\fixme{Фамилия Имя Отчество}}
+\newcommand{\vkrStudentGroup}{\fixme{ПМИб-181}}
+\newcommand{\vkrWorkType}{бакалаврская работа}
+\newcommand{\vkrWorkKind}{ВЫПУСКНАЯ КВАЛИФИКАЦИОННАЯ РАБОТА}
+\newcommand{\vkrDirectionCode}{01.03.02}
+\newcommand{\vkrDirectionTitle}{Прикладная математика и информатика}
+\newcommand{\vkrProfile}{Создание и применение технологий больших данных}
+\newcommand{\vkrTitle}{\fixme{НАЗВАНИЕ ТЕМЫ РАБОТЫ}}
+\newcommand{\vkrSupervisorDegree}{\fixme{ученая степень}}
+\newcommand{\vkrSupervisorPosition}{\fixme{должность}}
+\newcommand{\vkrSupervisorFullName}{\fixme{Фамилия Имя Отчество}}
+\newcommand{\vkrSupervisorShort}{\fixme{И.\,О.~Фамилия}}
+\newcommand{\vkrCity}{Волгоград}
+\newcommand{\vkrYear}{\the\year}
+\newcommand{\vkrDefenseDay}{\fixme{ДД}}
+\newcommand{\vkrDefenseMonth}{\fixme{месяца}}
+\newcommand{\vkrDefenseProtocol}{\fixme{номер}}
+\newcommand{\vkrAssignmentApprovedDay}{\fixme{ДД}}
+\newcommand{\vkrAssignmentApprovedMonth}{\fixme{месяца}}
+\newcommand{\vkrAssignmentApprovedYear}{\the\year}
+\newcommand{\vkrAssignmentIssueDate}{\fixme{ДД.ММ.ГГГГ}}
+\newcommand{\vkrAssignmentDeadline}{\fixme{ДД.ММ.ГГГГ}}
+\newcommand{\vkrAssignmentGoal}{\fixme{Сформулировать цель выпускной квалификационной работы.}}
+\newcommand{\vkrAssignmentTasks}{%
+    \item \fixme{Сформулировать первую основную задачу.}
+    \item \fixme{Сформулировать вторую основную задачу.}
+    \item \fixme{Сформулировать третью основную задачу.}
+}
+\newcommand{\vkrAssignmentStages}{%
+    \item \fixme{Изучение предметной области и постановка задачи.}
+    \item \fixme{Проектирование и реализация решения.}
+    \item \fixme{Проведение экспериментов и анализ результатов.}
+    \item \fixme{Оформление текста ВКР и подготовка к защите.}
+}
+\newcommand{\vkrAssignmentLiterature}{%
+    \item \fixme{Автор И.\,О. Название источника. - Город: Издательство, год.}
+}
+
+\providecommand{\documentPdfTitle}{\thesisTitle}
+\providecommand{\documentPdfAuthor}{\thesisAuthor}
+\providecommand{\documentPdfSubject}{\thesisSpecialtyNumber\ \thesisSpecialtyTitle}
+\renewcommand{\documentPdfTitle}{\vkrTitle}
+\renewcommand{\documentPdfAuthor}{\vkrStudentFullName}
+\renewcommand{\documentPdfSubject}{\vkrDirectionCode\ \vkrDirectionTitle}
