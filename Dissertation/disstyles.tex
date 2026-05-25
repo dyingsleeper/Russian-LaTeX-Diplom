@@ -52,9 +52,9 @@
 
 %% Переносить слова в заголовке не допускается (ГОСТ Р 7.0.11-2011, 5.3.5). Заголовки в оглавлении должны точно повторять заголовки в тексте (ГОСТ Р 7.0.11-2011, 5.2.3). Прямого указания на запрет переносов в оглавлении нет, но по той же логике невнесения искажений в смысл, лучше в оглавлении не переносить:
 \setrmarg{2.55em plus1fil}                             %To have the (sectional) titles in the ToC, etc., typeset ragged right with no hyphenation
-\renewcommand{\cftchapterpagefont}{\normalfont}        % нежирные номера страниц у глав в оглавлении
+\renewcommand{\cftchapterfont}{\normalfont}           % нежирные названия глав в оглавлении
+\renewcommand{\cftchapterpagefont}{\normalfont}       % нежирные номера страниц у глав в оглавлении
 \renewcommand{\cftchapterleader}{\cftdotfill{\cftchapterdotsep}}% нежирные точки до номеров страниц у глав в оглавлении
-%\renewcommand{\cftchapterfont}{}                       % нежирные названия глав в оглавлении
 
 \ifnumgreater{\value{headingdelim}}{0}{%
     \renewcommand\cftchapteraftersnum{.\space}       % добавляет точку с пробелом после номера раздела в оглавлении
@@ -107,7 +107,7 @@
     \chapterstyle{default}
     \setlength{\beforechapskip}{0pt}
     \setlength{\midchapskip}{0pt}
-    \setlength{\afterchapskip}{\theintvl\curtextsize}
+    \setlength{\afterchapskip}{0pt}
     \renewcommand*{\chapnamefont}{\basegostsectionfont}
     \renewcommand*{\chapnumfont}{\basegostsectionfont}
     \renewcommand*{\chaptitlefont}{\basegostsectionfont}
@@ -141,7 +141,7 @@
 \setsubsubsecheadstyle{\basegostsectionfont\hdngalign}
 \setsubsubsecindent{\otstuplen}
 
-\sethangfrom{\noindent #1} %все заголовки подразделов центрируются с учетом номера, как block
+\sethangfrom{#1} % заголовки начинаются с заданного абзацного отступа
 
 \ifnumequal{\value{chapstyle}}{1}{%
     \chapterstyle{thesisgostchapname}
@@ -150,11 +150,11 @@
 
 %%% Интервалы между заголовками
 \setbeforesecskip{\theintvl\curtextsize}% Заголовки отделяют от текста сверху и снизу тремя интервалами (ГОСТ Р 7.0.11-2011, 5.3.5).
-\setaftersecskip{\theintvl\curtextsize}
+\setaftersecskip{0pt}
 \setbeforesubsecskip{\theintvl\curtextsize}
-\setaftersubsecskip{\theintvl\curtextsize}
+\setaftersubsecskip{0pt}
 \setbeforesubsubsecskip{\theintvl\curtextsize}
-\setaftersubsubsecskip{\theintvl\curtextsize}
+\setaftersubsubsecskip{0pt}
 
 %%% Вертикальные интервалы глав (\chapter) в оглавлении как и у заголовков
 % раскомментировать следующие 2
