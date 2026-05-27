@@ -150,11 +150,13 @@
 
 %%% Интервалы между заголовками
 \setbeforesecskip{\theintvl\curtextsize}% Заголовки отделяют от текста сверху и снизу тремя интервалами (ГОСТ Р 7.0.11-2011, 5.3.5).
-\setaftersecskip{0pt}
+% В memoir нулевой afterskip делает заголовок внутритекстовым; 1sp
+% сохраняет блочный режим без заметного отступа.
+\setaftersecskip{1sp}
 \setbeforesubsecskip{\theintvl\curtextsize}
-\setaftersubsecskip{0pt}
+\setaftersubsecskip{1sp}
 \setbeforesubsubsecskip{\theintvl\curtextsize}
-\setaftersubsubsecskip{0pt}
+\setaftersubsubsecskip{1sp}
 
 %%% Вертикальные интервалы глав (\chapter) в оглавлении как и у заголовков
 % раскомментировать следующие 2
