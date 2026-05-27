@@ -1,643 +1,241 @@
-\chapter{Оформление различных элементов}\label{ch:ch1}
+\chapter{Анализ задачи и обзор существующих решений}\label{ch:problem}
 
-\section{Форматирование текста}\label{sec:ch1/sec1}
+Цель главы "--- зафиксировать предметную область, в~которой строится
+интеллектуальная система классификации текстовых документов, формально
+описать решаемую задачу и~обосновать требования, на~которых строятся
+архитектурные и~алгоритмические решения последующих глав. Глава
+последовательно вводит контекст работы с~электронной почтой как
+характерным классом текстовых документов, формализует задачу
+многоклассовой классификации с~явной категорией \texttt{other},
+рассматривает методы представления текста, классификации и~кластеризации,
+сопоставляет известные системы организации входящей корреспонденции
+и~переходит к~постановке задачи разработки.
 
-Мы можем сделать \textbf{жирный текст} и \textit{курсив}.
+\section{Предметная область и постановка проблемы}\label{sec:ch1/domain}
 
-\section{Ссылки}\label{sec:ch1/sec2}
+Электронная почта рассматривается в~работе как~представитель класса
+текстовых документов с~большим потоком и~устойчивой потребностью
+в~автоматическом упорядочении: объём ежедневной корреспонденции
+профессионального пользователя измеряется десятками и~сотнями писем
+\autocite{Singh2023EmFORE}, что делает ручную сортировку
+по~папкам непродуктивной. Задача относится к~общей области
+автоматической классификации текстов \autocite{Sebastiani2002TextCat},
+однако обладает рядом особенностей, которые и~определяют постановку
+настоящей работы.
 
-Сошлёмся на библиографию.
-Одна ссылка: \cite[с.~54]{Sokolov}\cite[с.~36]{Gaidaenko}.
-Две ссылки: \cite{Sokolov,Gaidaenko}.
-Ссылка на собственные работы: \cite{vakbib1, confbib2}.
-Много ссылок: %\cite[с.~54]{Lermontov,Management,Borozda} % такой «фокус»
-%вызывает biblatex warning относительно опции sortcites, потому что неясно, к
-%какому источнику относится уточнение о страницах, а bibtex об этой проблеме
-%даже не предупреждает
-\cite{Lermontov, Management, Borozda, Marketing, Constitution, FamilyCode,
-    Gost.7.0.53, Razumovski, Lagkueva, Pokrovski, Methodology, Berestova,
-    Kriger}%
-\ifnumequal{\value{bibliosel}}{0}{% Примеры для bibtex8
-    \cite{Sirotko, Lukina, Encyclopedia, Nasirova}%
-}{% Примеры для biblatex через движок biber
-    \cite{Sirotko2, Lukina2, Encyclopedia2, Nasirova2}%
-}%
-.
-И~ещё немного ссылок:~\cite{Article,Book,Booklet,Conference,Inbook,Incollection,Manual,Mastersthesis,
-    Misc,Phdthesis,Proceedings,Techreport,Unpublished}
-% Следует обратить внимание, что пробел после запятой внутри \cite{}
-% обрабатывается ожидаемо, а пробел перед запятой, может вызывать проблемы при
-% обработке ссылок.
-\cite{medvedev2006jelektronnye, CEAT:CEAT581, doi:10.1080/01932691.2010.513279,
-    Gosele1999161,Li2007StressAnalysis, Shoji199895, test:eisner-sample,
-    test:eisner-sample-shorted, AB_patent_Pomerantz_1968, iofis_patent1960}%
-\ifnumequal{\value{bibliosel}}{0}{% Примеры для bibtex8
-}{% Примеры для biblatex через движок biber
-    \cite{patent2h, patent3h, patent2}%
-}%
-.
+Существующие инструменты эту постановку не~покрывают. Ручные правила
+почтового клиента работают на~устойчивых признаках отправителя или
+темы и~ломаются при~смене адресов и~форматов уведомлений. Встроенные
+автоматические механизмы крупных почтовых сервисов "--- Focused~Inbox
+в~Outlook \autocite{Microsoft2024FocusedInbox} и~Priority~Inbox
+в~Gmail \autocite{Aberdeen2010PriorityInbox} "--- ограничены бинарной
+шкалой «важное~/ неважное» и~не~позволяют пользователю задавать
+собственные тематические или функциональные категории "--- проекты,
+направления работы, типы документов "--- и~автоматически распределять
+сообщения по~ним.
 
-\ifnumequal{\value{bibliosel}}{0}{% Примеры для bibtex8
-Попытка реализовать несколько ссылок на конкретные страницы
-для \texttt{bibtex} реализации библиографии:
-[\citenum{Sokolov}, с.~54; \citenum{Gaidaenko}, с.~36].
-}{% Примеры для biblatex через движок biber
-Несколько источников (мультицитата):
-% Тут специально написано по-разному тире, для демонстрации, что
-% применение специальных тире в настоящий момент в biblatex приводит к непоказу
-% "с.".
-\cites[vii--x, 5, 7]{Sokolov}[v"--~x, 25, 526]{Gaidaenko}[vii--x, 5, 7]{Techreport},
-работает только в \texttt{biblatex} реализации библиографии.
-}%
+Из~этого следуют четыре содержательных свойства задачи, существенные
+для дальнейших решений. Во-первых, набор классов \emph{персонализирован}
+и~неизвестен заранее, поэтому система должна формировать его
+по~исторической выборке писем, а~не~опираться на~готовый эталонный
+корпус. Во-вторых, входной поток \emph{multilingual}: русско-английская
+переписка должна обрабатываться в~едином признаковом пространстве.
+В-третьих, тексты писем содержат персональные данные и~фрагменты
+внутренних документов, поэтому требуется \emph{локальная обработка}
+без~передачи содержимого во~внешние сервисы. В-четвёртых, состав
+классов и~распределение сообщений со~временем меняются, что относит
+задачу к~постановкам с~явным concept drift.
 
-Ссылки на собственные работы:~\cite{vakbib1, confbib1}.
+Эти свойства согласуются с~двумя ключевыми перспективами в~прикладных
+работах по~организации электронной почты. Подход TaskTracer показывает
+применимость онлайн-классификаторов "--- наивного байесовского,
+Passive-Aggressive и~Confidence-Weighted Linear Classification "---
+для предсказания проектной принадлежности писем
+\autocite{Keiser2009TaskTracer}. Подход EmFORE строит индуктивные
+символьные правила распределения с~явной адаптацией к~изменению
+пространства признаков и~дрейфу категорий \autocite{Singh2023EmFORE}.
+Обе работы фиксируют общие требования: персонализированные классы,
+обработка низкоуверенных предсказаний и~цикл обратной связи. На~этой
+основе в~следующем разделе формулируется формальная постановка задачи.
 
-Сошлёмся на приложения: Приложение~\cref{app:A}, Приложение~\cref{app:B2}.
+\section{Формальная постановка задачи классификации}\label{sec:ch1/task}
 
-Сошлёмся на формулу: формула~\cref{eq:equation1}.
+\subsection{Многоклассовая постановка с категорией \texttt{other}}\label{subsec:ch1/task/formal}
 
-Сошлёмся на изображение: рисунок~\cref{fig:knuth}.
+Пусть \( X \) "--- множество допустимых текстовых сообщений, представленных
+после нормализации в~виде канонической строки \texttt{normalized\_text}, и~пусть
+\( Y_{\text{user}} = \{y_1, \dots, y_K\} \) "--- множество пользовательских
+классов, формируемое в~процессе инициализации системы. Расширим это
+множество специальной категорией \texttt{other}, представляющей сообщения,
+не~относящиеся ни~к~одному из~существующих пользовательских классов:
+\begin{equation}
+    \label{eq:label-set}
+    Y = Y_{\text{user}} \cup \{\,y_{\text{other}}\,\}.
+\end{equation}
 
-Стандартной практикой является добавление к ссылкам префикса, характеризующего тип элемента.
-Это не является строгим требованием, но~позволяет лучше ориентироваться в документах большого размера.
-Например, для ссылок на~рисунки используется префикс \textit{fig},
-для ссылки на~таблицу "--- \textit{tab}.
-
-В таблице \cref{tab:tab_pref} приложения~\cref{app:B4} приведён список рекомендуемых
-к использованию стандартных префиксов.
-
-В некоторых ситуациях возникает необходимость отойти от требований ГОСТ по оформлению ссылок на
-литературу.
-В таком случае можно воспользоваться дополнительными опциями пакета \verb+biblatex+.
-
-Например, в ссылке на книгу~\cite{sobenin_kdv} использование опции \verb+maxnames=4+ позволяет
-вывести имена всех четырёх авторов.
-По ГОСТ имена последних трёх авторов опускаются.
-
-Кроме того, часто возникают проблемы с транслитерованными инициалами. Некоторые буквы русского
-алфавита по правилам транслитерации записываются двумя буквами латинского алфавита (ю-yu, ё-yo и
-т.д.).
-Такие инициалы \verb+biblatex+ будет сокращать до одной буквы, что неверно.
-Поправить его работу можно использовав опцию \verb+giveninits=false+.
-Пример использования этой опции можно видеть в ссылке~\cite{initials}.
-
-\section{Формулы}\label{sec:ch1/sec3}
-
-Благодаря пакету \textit{icomma}, \LaTeX~одинаково хорошо воспринимает
-в~качестве десятичного разделителя и запятую (\(3,1415\)), и точку (\(3.1415\)).
-
-\subsection{Ненумерованные одиночные формулы}\label{subsec:ch1/sec3/sub1}
-
-Вот так может выглядеть формула, которую необходимо вставить в~строку
-по~тексту: \(x \approx \sin x\) при \(x \to 0\).
-
-А вот так выглядит ненумерованная отдельностоящая формула c подстрочными
-и надстрочными индексами:
-\[
-    (x_1+x_2)^2 = x_1^2 + 2 x_1 x_2 + x_2^2
-\]
-
-Формула с неопределенным интегралом:
-\[
-    \int f(\alpha+x)=\sum\beta
-\]
-
-При использовании дробей формулы могут получаться очень высокие:
-\[
-    \frac{1}{\sqrt{2}+
-        \displaystyle\frac{1}{\sqrt{2}+
-            \displaystyle\frac{1}{\sqrt{2}+\cdots}}}
-\]
-
-В формулах можно использовать греческие буквы:
-%Все \original... команды заранее, ради этого примера, определены в Dissertation\userstyles.tex
-\[
-    \alpha\beta\gamma\delta\originalepsilon\epsilon\zeta\eta\theta%
-    \vartheta\iota\kappa\varkappa\lambda\mu\nu\xi\pi\varpi\rho\varrho%
-    \sigma\varsigma\tau\upsilon\originalphi\phi\chi\psi\omega\Gamma\Delta%
-    \Theta\Lambda\Xi\Pi\Sigma\Upsilon\Phi\Psi\Omega
-\]
-\[%https://texfaq.org/FAQ-boldgreek
-    \boldsymbol{\alpha\beta\gamma\delta\originalepsilon\epsilon\zeta\eta%
-        \theta\vartheta\iota\kappa\varkappa\lambda\mu\nu\xi\pi\varpi\rho%
-        \varrho\sigma\varsigma\tau\upsilon\originalphi\phi\chi\psi\omega\Gamma%
-        \Delta\Theta\Lambda\Xi\Pi\Sigma\Upsilon\Phi\Psi\Omega}
-\]
-
-Для добавления формул можно использовать пары \verb+$+\dots\verb+$+ и \verb+$$+\dots\verb+$$+,
-но~они считаются устаревшими.
-Лучше использовать их функциональные аналоги \verb+\(+\dots\verb+\)+ и \verb+\[+\dots\verb+\]+.
-
-\subsection{Ненумерованные многострочные формулы}\label{subsec:ch1/sec3/sub2}
-
-Вот так можно написать две формулы, не нумеруя их, чтобы знаки <<равно>> были
-строго друг под другом:
-\begin{align}
-    f_W & =  \min \left( 1, \max \left( 0, \frac{W_{soil} / W_{max}}{W_{crit}} \right)  \right), \nonumber \\
-    f_T & =  \min \left( 1, \max \left( 0, \frac{T_s / T_{melt}}{T_{crit}} \right)  \right), \nonumber
-\end{align}
-
-Выровнять систему ещё и по переменной \( x \) можно, используя окружение
-\verb|alignedat| из пакета \verb|amsmath|. Вот так:
-\[
-|x| = \left\{
-\begin{alignedat}{2}
-     &   & x, \quad & \text{eсли } x\geqslant 0 \\
-     & - & x, \quad & \text{eсли } x<0
-\end{alignedat}
-\right.
-\]
-Здесь первый амперсанд (в исходном \LaTeX\ описании формулы) означает
-выравнивание по~левому краю, второй "--- по~\( x \), а~третий "--- по~слову
-<<если>>. Команда \verb|\quad| делает большой горизонтальный пробел.
-
-Ещё вариант:
-\[
-    |x|=
+Задача классификации формулируется как~построение отображения
+\begin{equation}
+    \label{eq:classifier}
+    f \colon X \to Y,
+\end{equation}
+минимизирующего эмпирический риск
+\begin{equation}
+    \label{eq:empirical-risk}
+    \widehat{R}(f) = \frac{1}{N} \sum_{i=1}^{N} \mathbb{1}\bigl[\,f(x_i) \neq y_i\,\bigr]
+\end{equation}
+на~размеченной выборке \( \{(x_i, y_i)\}_{i=1}^{N} \subseteq X \times Y \).
+В~рамках работы отображение \( f \) реализуется как~композиция
+векторизатора \( \varphi \colon X \to \mathbb{R}^{d} \), параметризованного
+классификатора \( f_\theta \colon \mathbb{R}^{d} \to \mathbb{R}^{K} \),
+возвращающего оценки правдоподобия \( p_k(x) \) для каждого
+пользовательского класса, и~решающего правила, учитывающего порог
+уверенности \( \tau \in (0, 1) \):
+\begin{equation}
+    \label{eq:decision-rule}
+    f(x) =
     \begin{cases}
-        \phantom{-}x, \text{если } x \geqslant 0 \\
-        -x, \text{если } x<0
+        \arg\max\limits_{k \in \{1, \dots, K\}} p_k(x), & \text{если } \max_{k} p_k(x) \geqslant \tau, \\
+        y_{\text{other}},                                & \text{иначе.}
     \end{cases}
-\]
-
-Кроме того, для  нумерованных формул \verb|alignedat| делает вертикальное
-выравнивание номера формулы по центру формулы. Например, выравнивание
-компонент вектора:
-\begin{equation}
-    \label{eq:2p3}
-    \begin{alignedat}{2}
-        {\mathbf{N}}_{o1n}^{(j)} = \,{\sin} \phi\,n\!\left(n+1\right)
-        {\sin}\theta\,
-        \pi_n\!\left({\cos} \theta\right)
-        \frac{
-        z_n^{(j)}\!\left( \rho \right)
-        }{\rho}\,
-         & {\boldsymbol{\hat{\mathrm e}}}_{r}\,+      \\
-        +\,
-        {\sin} \phi\,
-        \tau_n\!\left({\cos} \theta\right)
-        \frac{
-        \left[\rho z_n^{(j)}\!\left( \rho \right)\right]^{\prime}
-        }{\rho}\,
-         & {\boldsymbol{\hat{\mathrm e}}}_{\theta}\,+ \\
-        +\,
-        {\cos} \phi\,
-        \pi_n\!\left({\cos} \theta\right)
-        \frac{
-        \left[\rho z_n^{(j)}\!\left( \rho \right)\right]^{\prime}
-        }{\rho}\,
-         & {\boldsymbol{\hat{\mathrm e}}}_{\phi}\:.
-    \end{alignedat}
 \end{equation}
 
-Ещё об отступах. Иногда для лучшей <<читаемости>> формул полезно
-немного исправить стандартные интервалы \LaTeX\ с учётом логической
-структуры самой формулы. Например в формуле~\cref{eq:2p3} добавлен
-небольшой отступ \verb+\,+ между основными сомножителями, ниже
-результат применения всех вариантов отступа:
-\begin{align*}
-    \backslash!             & \quad f(x) = x^2\! +3x\! +2         \\
-    \mbox{по-умолчанию}     & \quad f(x) = x^2+3x+2               \\
-    \backslash,             & \quad f(x) = x^2\, +3x\, +2         \\
-    \backslash{:}           & \quad f(x) = x^2\: +3x\: +2         \\
-    \backslash;             & \quad f(x) = x^2\; +3x\; +2         \\
-    \backslash \mbox{space} & \quad f(x) = x^2\ +3x\ +2           \\
-    \backslash \mbox{quad}  & \quad f(x) = x^2\quad +3x\quad +2   \\
-    \backslash \mbox{qquad} & \quad f(x) = x^2\qquad +3x\qquad +2
-\end{align*}
+Категория \texttt{other} имеет два функциональных предназначения. Первое "---
+безопасное поведение системы при низкой уверенности: лучше отказаться
+от~классификации, чем~ошибочно отнести сообщение к~посторонней категории.
+Второе "--- формирование активного буфера обратной связи: сообщения,
+попавшие в~\texttt{other}, накапливаются для последующего рассмотрения,
+переаннотации и~переобучения модели. В~дальнейшем правило~\eqref{eq:decision-rule}
+расширяется покомпонентными порогами \( \tau_k \) и~проверкой
+on-of-distribution с~использованием расстояния до~ближайшего центра
+кластера или калибровки уверенности, что детально рассматривается
+в~главе~\ref{ch:ch2}.
 
-Можно использовать разные математические алфавиты:
+Общая структура постановки задачи показана на~рисунке~\ref{fig:classification-scheme}.
+
+\begin{figure}[h]
+    \centering
+    \input{Dissertation/images/classification_scheme.tikz}
+    \caption{Общая постановка задачи классификации электронной почты
+        с~явной категорией \texttt{other}: нормализация сообщения, построение
+        векторного представления \( \varphi(x) \), вычисление оценок
+        \( p_k(x) \) классификатором \( f_\theta \) и~применение порогового
+        решающего правила}\label{fig:classification-scheme}
+\end{figure}
+
+\subsection{Особенности задачи}\label{subsec:ch1/task/specifics}
+
+По~сравнению с~классической постановкой многоклассовой классификации
+текстов решаемая задача обладает следующими особенностями.
+
+\textit{Персонализированный характер классов.} Набор \( Y_{\text{user}} \)
+не~задан заранее и~различается для разных пользователей. Это исключает
+использование заранее размеченных эталонных корпусов и~требует
+механизма автоматического формирования первичных классов
+по~исторической выборке писем.
+
+\textit{Bootstrap классов.} На~момент начала эксплуатации система
+не~располагает размеченными примерами. Первичная разметка
+обеспечивается процедурой кластеризации исторической почты с~последующей
+ручной проверкой кандидатов, методы которой рассматриваются далее
+в~настоящей главе.
+
+\textit{Обязательная категория \texttt{other}.} Любой содержательный
+поток включает сообщения, не~относящиеся к~устоявшимся классам
+пользователя: разовая переписка, технические уведомления нового типа,
+смена тематической структуры архива. Включение \texttt{other} в~целевое
+множество~\eqref{eq:label-set} и~использование решающего правила~\eqref{eq:decision-rule}
+исключает принудительное распределение таких сообщений по~посторонним
+классам.
+
+\textit{Locality и приватность.} Все компоненты \( \varphi \) и~\( f_\theta \)
+исполняются локально; передача текста писем во~внешние API
+не~допускается. Это ограничивает выбор моделей теми, которые могут
+быть развёрнуты на~оборудовании пользователя в~CPU- или
+GPU-конфигурации.
+
+\textit{Multilingual-характер.} Архивы профессионального пользователя
+сочетают сообщения на~русском и~английском языках, нередко в~рамках
+одной цепочки переписки. Векторизатор \( \varphi \) должен отображать
+тексты обоих языков в~единое признаковое пространство, обеспечивая
+сопоставимые представления для последующей кластеризации и~классификации.
+
+\subsection{Метрики качества}\label{subsec:ch1/task/metrics}
+
+Для оценки качества классификатора используется набор стандартных
+метрик многоклассовой классификации~\autocite{Sokolova2009Metrics,Manning2008IR},
+дополненный показателями, характерными для постановки с~категорией
+\texttt{other}.
+
+Для каждого класса \( y_k \in Y_{\text{user}} \) на~тестовой выборке
+определяются истинно положительные \( \mathrm{TP}_k \), ложно
+положительные \( \mathrm{FP}_k \) и~ложно отрицательные \( \mathrm{FN}_k \)
+предсказания. По~ним вычисляются покомпонентные точность и~полнота
 \begin{align}
-    \mathcal{ABCDEFGHIJKLMNOPQRSTUVWXYZ} \nonumber  \\
-    \mathfrak{ABCDEFGHIJKLMNOPQRSTUVWXYZ} \nonumber \\
-    \mathbb{ABCDEFGHIJKLMNOPQRSTUVWXYZ} \nonumber
+    \mathrm{Precision}_k & = \frac{\mathrm{TP}_k}{\mathrm{TP}_k + \mathrm{FP}_k}, \label{eq:precision} \\
+    \mathrm{Recall}_k    & = \frac{\mathrm{TP}_k}{\mathrm{TP}_k + \mathrm{FN}_k}, \label{eq:recall}
 \end{align}
-
-Посмотрим на систему уравнений на примере аттрактора Лоренца:
-
-\[
-\left\{
-\begin{array}{rl}
-    \dot x = & \sigma (y-x)  \\
-    \dot y = & x (r - z) - y \\
-    \dot z = & xy - bz
-\end{array}
-\right.
-\]
-
-А для вёрстки матриц удобно использовать многоточия:
-\[
-    \left(
-        \begin{array}{ccc}
-            a_{11} & \ldots & a_{1n} \\
-            \vdots & \ddots & \vdots \\
-            a_{n1} & \ldots & a_{nn} \\
-        \end{array}
-    \right)
-\]
-
-\subsection{Нумерованные формулы}\label{subsec:ch1/sec3/sub3}
-
-А вот так пишется нумерованная формула:
+их~гармоническое среднее
 \begin{equation}
-    \label{eq:equation1}
-    e = \lim_{n \to \infty} \left( 1+\frac{1}{n} \right) ^n
+    \label{eq:f1}
+    F_{1,k} = \frac{2\,\mathrm{Precision}_k \cdot \mathrm{Recall}_k}{\mathrm{Precision}_k + \mathrm{Recall}_k}
 \end{equation}
-
-Нумерованных формул может быть несколько:
+и~агрегированные показатели:
 \begin{equation}
-    \label{eq:equation2}
-    \lim_{n \to \infty} \sum_{k=1}^n \frac{1}{k^2} = \frac{\pi^2}{6}
+    \label{eq:macro-f1}
+    \mathrm{macro\text{-}F_1} = \frac{1}{K}\sum_{k=1}^{K} F_{1,k},
+    \qquad
+    \mathrm{Accuracy} = \frac{1}{N_{\mathrm{test}}} \sum_{i=1}^{N_{\mathrm{test}}} \mathbb{1}\bigl[\,\hat{y}_i = y_i\,\bigr].
 \end{equation}
 
-Впоследствии на формулы~\cref{eq:equation1, eq:equation2} можно ссылаться.
+Сводное представление качества по~всем классам даёт матрица ошибок
+(confusion matrix), которая используется как~для агрегированной оценки,
+так и~для анализа систематических смешений между классами.
 
-Сделать так, чтобы номер формулы стоял напротив средней строки, можно,
-используя окружение \verb|multlined| (пакет \verb|mathtools|) вместо
-\verb|multline| внутри окружения \verb|equation|. Вот так:
-\begin{equation} % \tag{S} % tag - вписывает свой текст
-    \label{eq:equation3}
-    \begin{multlined}
-        1+ 2+3+4+5+6+7+\dots + \\
-        + 50+51+52+53+54+55+56+57 + \dots + \\
-        + 96+97+98+99+100=5050
-    \end{multlined}
-\end{equation}
-
-Уравнения~\cref{eq:subeq_1,eq:subeq_2} демонстрируют возможности
-окружения \verb|subequations| (пакет \verb|amsmath|).
-\begin{subequations}
-    \label{eq:subeq_1}
-    \begin{gather}
-        y = x^2 + 1 \label{eq:subeq_1-1} \\
-        y = 2 x^2 - x + 1 \label{eq:subeq_1-2}
-    \end{gather}
-\end{subequations}
-Ссылки на отдельные уравнения~\cref{eq:subeq_1-1,eq:subeq_1-2,eq:subeq_2-1}.
-\begin{subequations}
-    \label{eq:subeq_2}
-    \begin{align}
-        y & = x^3 + x^2 + x + 1 \label{eq:subeq_2-1} \\
-        y & = x^2
-    \end{align}
-\end{subequations}
-
-\subsection{Форматирование чисел и размерностей величин}\label{sec:units}
-
-Числа форматируются при помощи команды \verb|\num|:
-\num{5,3};
-\num{2,3e8};
-\num{12345,67890};
-\num{2,6 d4};
-\num{1+-2i};
-\num{.3e45};
-\num[exponent-base=2]{5 e64};
-\num[exponent-base=2,exponent-to-prefix]{5 e64};
-\num{1.654 x 2.34 x 3.430}
-\num{1 2 x 3 / 4}.
-Для написания последовательности чисел можно использовать команды \verb|\numlist| и \verb|\numrange|:
-\numlist{10;30;50;70}; \numrange{10}{30}.
-Значения углов можно форматировать при помощи команды \verb|\ang|:
-\ang{2.67};
-\ang{30,3};
-\ang{-1;;};
-\ang{;-2;};
-\ang{;;-3};
-\ang{300;10;1}.
-
-Обратите внимание, что ГОСТ запрещает использование знака <<->> для обозначения отрицательных чисел
-за исключением формул, таблиц и~рисунков.
-Вместо него следует использовать слово <<минус>>.
-
-Размерности можно записывать при помощи команд \verb|\si| и \verb|\SI|:
-\si{\farad\squared\lumen\candela};
-\si{\joule\per\mole\per\kelvin};
-\si[per-mode = symbol-or-fraction]{\joule\per\mole\per\kelvin};
-\si{\metre\per\second\squared};
-\SI{0.10(5)}{\neper};
-\SI{1.2-3i e5}{\joule\per\mole\per\kelvin};
-\SIlist{1;2;3;4}{\tesla};
-\SIrange{50}{100}{\volt}.
-Список единиц измерений приведён в таблицах~\cref{tab:unit:base,
-    tab:unit:derived,tab:unit:accepted,tab:unit:physical,tab:unit:other}.
-Приставки единиц приведены в~таблице~\cref{tab:unit:prefix}.
-
-С дополнительными опциями форматирования можно ознакомиться в~описании пакета \texttt{siunitx};
-изменить или добавить единицы измерений можно в~файле \texttt{siunitx.cfg}.
-
-\begin{table}
-    \centering
-    \captionsetup{justification=centering} % выравнивание подписи по-центру
-    \caption{Основные величины СИ}\label{tab:unit:base}
-    \begin{tabular}{llc}
-        \toprule
-        Название  & Команда          & Символ         \\
-        \midrule
-        Ампер     & \verb|\ampere|   & \si{\ampere}   \\
-        Кандела   & \verb|\candela|  & \si{\candela}  \\
-        Кельвин   & \verb|\kelvin|   & \si{\kelvin}   \\
-        Килограмм & \verb|\kilogram| & \si{\kilogram} \\
-        Метр      & \verb|\metre|    & \si{\metre}    \\
-        Моль      & \verb|\mole|     & \si{\mole}     \\
-        Секунда   & \verb|\second|   & \si{\second}   \\
-        \bottomrule
-    \end{tabular}
-\end{table}
-
-\begin{table}
-    \small
-    \centering
-    \begin{threeparttable}% выравнивание подписи по границам таблицы
-        \caption{Производные единицы СИ}\label{tab:unit:derived}
-        \begin{tabular}{llc|llc}
-            \toprule
-            Название       & Команда               & Символ              & Название & Команда & Символ \\
-            \midrule
-            Беккерель      & \verb|\becquerel|     & \si{\becquerel}     &
-            Ньютон         & \verb|\newton|        & \si{\newton}                                      \\
-            Градус Цельсия & \verb|\degreeCelsius| & \si{\degreeCelsius} &
-            Ом             & \verb|\ohm|           & \si{\ohm}                                         \\
-            Кулон          & \verb|\coulomb|       & \si{\coulomb}       &
-            Паскаль        & \verb|\pascal|        & \si{\pascal}                                      \\
-            Фарад          & \verb|\farad|         & \si{\farad}         &
-            Радиан         & \verb|\radian|        & \si{\radian}                                      \\
-            Грей           & \verb|\gray|          & \si{\gray}          &
-            Сименс         & \verb|\siemens|       & \si{\siemens}                                     \\
-            Герц           & \verb|\hertz|         & \si{\hertz}         &
-            Зиверт         & \verb|\sievert|       & \si{\sievert}                                     \\
-            Генри          & \verb|\henry|         & \si{\henry}         &
-            Стерадиан      & \verb|\steradian|     & \si{\steradian}                                   \\
-            Джоуль         & \verb|\joule|         & \si{\joule}         &
-            Тесла          & \verb|\tesla|         & \si{\tesla}                                       \\
-            Катал          & \verb|\katal|         & \si{\katal}         &
-            Вольт          & \verb|\volt|          & \si{\volt}                                        \\
-            Люмен          & \verb|\lumen|         & \si{\lumen}         &
-            Ватт           & \verb|\watt|          & \si{\watt}                                        \\
-            Люкс           & \verb|\lux|           & \si{\lux}           &
-            Вебер          & \verb|\weber|         & \si{\weber}                                       \\
-            \bottomrule
-        \end{tabular}
-    \end{threeparttable}
-\end{table}
-
-\begin{table}
-    \centering
-    \begin{threeparttable}% выравнивание подписи по границам таблицы
-        \caption{Внесистемные единицы}\label{tab:unit:accepted}
-
-        \begin{tabular}{llc}
-            \toprule
-            Название        & Команда           & Символ          \\
-            \midrule
-            День            & \verb|\day|       & \si{\day}       \\
-            Градус          & \verb|\degree|    & \si{\degree}    \\
-            Гектар          & \verb|\hectare|   & \si{\hectare}   \\
-            Час             & \verb|\hour|      & \si{\hour}      \\
-            Литр            & \verb|\litre|     & \si{\litre}     \\
-            Угловая минута  & \verb|\arcminute| & \si{\arcminute} \\
-            Угловая секунда & \verb|\arcsecond| & \si{\arcsecond} \\ %
-            Минута          & \verb|\minute|    & \si{\minute}    \\
-            Тонна           & \verb|\tonne|     & \si{\tonne}     \\
-            \bottomrule
-        \end{tabular}
-    \end{threeparttable}
-\end{table}
-
-\begin{table}
-    \centering
-    \captionsetup{justification=centering}
-    \caption{Внесистемные единицы, получаемые из эксперимента}\label{tab:unit:physical}
-    \begin{tabular}{llc}
-        \toprule
-        Название                & Команда                  & Символ                 \\
-        \midrule
-        Астрономическая единица & \verb|\astronomicalunit| & \si{\astronomicalunit} \\
-        Атомная единица массы   & \verb|\atomicmassunit|   & \si{\atomicmassunit}   \\
-        Боровский радиус        & \verb|\bohr|             & \si{\bohr}             \\
-        Скорость света          & \verb|\clight|           & \si{\clight}           \\
-        Дальтон                 & \verb|\dalton|           & \si{\dalton}           \\
-        Масса электрона         & \verb|\electronmass|     & \si{\electronmass}     \\
-        Электрон Вольт          & \verb|\electronvolt|     & \si{\electronvolt}     \\
-        Элементарный заряд      & \verb|\elementarycharge| & \si{\elementarycharge} \\
-        Энергия Хартри          & \verb|\hartree|          & \si{\hartree}          \\
-        Постоянная Планка       & \verb|\planckbar|        & \si{\planckbar}        \\
-        \bottomrule
-    \end{tabular}
-\end{table}
-
-\begin{table}
-    \centering
-    \begin{threeparttable}% выравнивание подписи по границам таблицы
-        \caption{Другие внесистемные единицы}\label{tab:unit:other}
-        \begin{tabular}{llc}
-            \toprule
-            Название                  & Команда              & Символ             \\
-            \midrule
-            Ангстрем                  & \verb|\angstrom|     & \si{\angstrom}     \\
-            Бар                       & \verb|\bar|          & \si{\bar}          \\
-            Барн                      & \verb|\barn|         & \si{\barn}         \\
-            Бел                       & \verb|\bel|          & \si{\bel}          \\
-            Децибел                   & \verb|\decibel|      & \si{\decibel}      \\
-            Узел                      & \verb|\knot|         & \si{\knot}         \\
-            Миллиметр ртутного столба & \verb|\mmHg|         & \si{\mmHg}         \\
-            Морская миля              & \verb|\nauticalmile| & \si{\nauticalmile} \\
-            Непер                     & \verb|\neper|        & \si{\neper}        \\
-            \bottomrule
-        \end{tabular}
-    \end{threeparttable}
-\end{table}
-
-\begin{table}
-    \small
-    \centering
-    \begin{threeparttable}% выравнивание подписи по границам таблицы
-        \caption{Приставки СИ}\label{tab:unit:prefix}
-        \begin{tabular}{llcc|llcc}
-            \toprule
-            Приставка & Команда       & Символ      & Степень      &
-            Приставка & Команда       & Символ      & Степень        \\
-            \midrule
-            Иокто     & \verb|\yocto| & \si{\yocto} & \textminus24 &
-            Дека      & \verb|\deca|  & \si{\deca}  & 1              \\
-            Зепто     & \verb|\zepto| & \si{\zepto} & \textminus21 &
-            Гекто     & \verb|\hecto| & \si{\hecto} & 2              \\
-            Атто      & \verb|\atto|  & \si{\atto}  & \textminus18 &
-            Кило      & \verb|\kilo|  & \si{\kilo}  & 3              \\
-            Фемто     & \verb|\femto| & \si{\femto} & \textminus15 &
-            Мега      & \verb|\mega|  & \si{\mega}  & 6              \\
-            Пико      & \verb|\pico|  & \si{\pico}  & \textminus12 &
-            Гига      & \verb|\giga|  & \si{\giga}  & 9              \\
-            Нано      & \verb|\nano|  & \si{\nano}  & \textminus9  &
-            Терра     & \verb|\tera|  & \si{\tera}  & 12             \\
-            Микро     & \verb|\micro| & \si{\micro} & \textminus6  &
-            Пета      & \verb|\peta|  & \si{\peta}  & 15             \\
-            Милли     & \verb|\milli| & \si{\milli} & \textminus3  &
-            Екса      & \verb|\exa|   & \si{\exa}   & 18             \\
-            Санти     & \verb|\centi| & \si{\centi} & \textminus2  &
-            Зетта     & \verb|\zetta| & \si{\zetta} & 21             \\
-            Деци      & \verb|\deci|  & \si{\deci}  & \textminus1  &
-            Иотта     & \verb|\yotta| & \si{\yotta} & 24             \\
-            \bottomrule
-        \end{tabular}
-    \end{threeparttable}
-\end{table}
-
-\subsection{Заголовки с формулами: \texorpdfstring{\(a^2 + b^2 = c^2\)}{%
-        a\texttwosuperior\ + b\texttwosuperior\ = c\texttwosuperior},
-    \texorpdfstring{\(\left\vert\textrm{{Im}}\Sigma\left(
-            \protect\varepsilon\right)\right\vert\approx const\)}{|ImΣ (ε)| ≈ const},
-    \texorpdfstring{\(\sigma_{xx}^{(1)}\)}{σ\_\{xx\}\textasciicircum\{(1)\}}
-}\label{subsec:with_math}
-
-Пакет \texttt{hyperref} берёт текст для закладок в pdf-файле из~аргументов
-команд типа \verb|\section|, которые могут содержать математические формулы,
-а~также изменения цвета текста или шрифта, которые не отображаются в~закладках.
-Чтобы использование формул в заголовках не вызывало в~логе компиляции появление
-предупреждений типа <<\texttt{Token not allowed in~a~PDF string
-    (Unicode):(hyperref) removing...}>>, следует использовать конструкцию
-\verb|\texorpdfstring{}{}|, где в~первых фигурных скобках указывается
-формула, а~во~вторых "--- запись формулы для закладок.
-
-\section{Рецензирование текста}\label{sec:markup}
-
-В шаблоне для диссертации и автореферата заданы команды рецензирования.
-Они видны при компиляции шаблона в режиме черновика или при установке
-соответствующей настройки (\verb+showmarkup+) в~файле \verb+common/setup.tex+.
-
-Команда \verb+\todo+ отмечает текст красным цветом.
-\todo{Например, так.}
-
-Команда \verb+\note+ позволяет выбрать цвет текста.
-\note{Чёрный, } \note[red]{красный, } \note[green]{зелёный, }
-\note[blue]{синий.} \note[orange]{Обратите внимание на ширину и расстановку
-    формирующихся пробелов, в~результате приведённой записи (зависит также
-    от~применяемого компилятора).}
-
-Окружение \verb+commentbox+ также позволяет выбрать цвет.
-
-\begin{commentbox}[red]
-    Красный текст.
-
-    Несколько параграфов красного текста.
-\end{commentbox}
-
-\begin{commentbox}[blue]
-    Синяя формула.
-
-    \begin{equation}
-        \alpha + \beta = \gamma
-    \end{equation}
-\end{commentbox}
-
-\verb+commentbox+ позволяет закомментировать участок кода в~режиме чистовика.
-Чтобы убрать кусок кода для всех режимов, можно использовать окружение
-\verb+comment+.
-
-\begin{comment}
-Этот текст всегда скрыт.
-\end{comment}
-
-\section{Работа со списком сокращений и~условных обозначений}\label{sec:acronyms}
-
-С помощью пакета \texttt{nomencl} можно создавать удобный сортированный список
-сокращений и условных обозначений во время написания текста. Вызов
-\verb+\nomenclature+ добавляет нужный символ или сокращение с~описанием
-в~список, который затем печатается вызовом \verb+\printnomenclature+
-в~соответствующем разделе.
-Для того, чтобы эти операции прошли, потребуется дополнительный вызов
-\verb+makeindex -s nomencl.ist -o %.nls %.nlo+ в~командной строке, где вместо
-\verb+%+ следует подставить имя главного файла проекта (\verb+dissertation+
-для этого шаблона).
-Затем потребуется один или два дополнительных вызова компилятора проекта.
+Помимо классических метрик фиксируются два показателя, специфичные
+для постановки с~явной категорией \texttt{other}. Coverage "--- доля
+сообщений, для которых классификатор принял решение в~пользу одного
+из~пользовательских классов:
 \begin{equation}
-    \omega = c k,
+    \label{eq:coverage}
+    \mathrm{Coverage} = \frac{1}{N_{\mathrm{test}}}\sum_{i=1}^{N_{\mathrm{test}}} \mathbb{1}\bigl[\,f(x_i) \neq y_{\text{other}}\,\bigr].
 \end{equation}
-где \( \omega \) "--- частота света, \( c \) "--- скорость света, \( k \) "---
-модуль волнового вектора.
-\nomenclature{\(\omega\)}{частота света\nomrefeq}
-\nomenclature{\(c\)}{скорость света\nomrefpage}
-\nomenclature{\(k\)}{модуль волнового вектора\nomrefeqpage}
-Использование
-\begin{verbatim}
-\nomenclature{\(\omega\)}{частота света\nomrefeq}
-\nomenclature{\(c\)}{скорость света\nomrefpage}
-\nomenclature{\(k\)}{модуль волнового вектора\nomrefeqpage}
-\end{verbatim}
-после уравнения добавит в список условных обозначений три записи.
-Ссылки \verb+\nomrefeq+ на последнее уравнение, \verb+\nomrefpage+ "--- на
-страницу, \verb+\nomrefeqpage+ "--- сразу на~последнее уравнение и~на~страницу,
-можно опускать и~не~использовать.
+Other-rate определяется как~\( 1 - \mathrm{Coverage} \) и~характеризует
+долю отказов от~классификации. Оба показателя рассматриваются совместно
+с~macro-F1: при~фиксированном уровне ошибок более высокое coverage
+означает большую практическую применимость системы. Дополнительно
+метрики~\eqref{eq:precision}--\eqref{eq:f1} вычисляются раздельно
+по~языкам сообщения, что позволяет выявлять перекосы качества между
+русскоязычной и~англоязычной частью архива.
 
-Группировкой и сортировкой пунктов в списке можно управлять с~помощью указания
-дополнительных аргументов к команде \verb+nomenclature+.
-Например, при вызове
-\begin{verbatim}
-\nomenclature[03]{\( \hbar \)}{постоянная Планка}
-\nomenclature[01]{\( G \)}{гравитационная постоянная}
-\end{verbatim}
-\( G \) будет стоять в списке выше, чем \( \hbar \).
-Для корректных вертикальных отступов между строками в описании лучше
-не~использовать многострочные формулы в~списке обозначений.
+\subsection{Дисбаланс классов и concept drift}\label{subsec:ch1/task/imbalance}
 
-\nomenclature{%
-    \( \begin{rcases}
-        a_n \\
-        b_n
-    \end{rcases} \)%
-}{коэффициенты разложения Ми в дальнем поле соответствующие электрическим и
-    магнитным мультиполям}
-\nomenclature[a\( e \)]{\( {\boldsymbol{\hat{\mathrm e}}} \)}{единичный вектор}
-\nomenclature{\( E_0 \)}{амплитуда падающего поля}
-\nomenclature{\( j \)}{тип функции Бесселя}
-\nomenclature{\( k \)}{волновой вектор падающей волны}
-\nomenclature{%
-    \( \begin{rcases}
-        a_n \\
-        b_n
-    \end{rcases} \)%
-}{и снова коэффициенты разложения Ми в дальнем поле соответствующие
-    электрическим и магнитным мультиполям. Добавлено много текста, так что
-    описание группы условных обозначений значительно превысило высоту этой
-    группы...}
-\nomenclature{\( L \)}{общее число слоёв}
-\nomenclature{\( l \)}{номер слоя внутри стратифицированной сферы}
-\nomenclature{\( \lambda \)}{длина волны электромагнитного излучения в вакууме}
-\nomenclature{\( n \)}{порядок мультиполя}
-\nomenclature{%
-    \( \begin{rcases}
-        {\mathbf{N}}_{e1n}^{(j)} & {\mathbf{N}}_{o1n}^{(j)} \\
-        {\mathbf{M}_{o1n}^{(j)}} & {\mathbf{M}_{e1n}^{(j)}}
-    \end{rcases} \)%
-}{сферические векторные гармоники}
-\nomenclature{\( \mu \)}{магнитная проницаемость в вакууме}
-\nomenclature{\( r, \theta, \phi \)}{полярные координаты}
-\nomenclature{\( \omega \)}{частота падающей волны}
+Распределение пользовательских классов в~почтовом архиве заведомо
+неравномерное: несколько активных проектов формируют большую часть
+переписки, тогда как~ряд категорий представлен единичными примерами.
+Применение в~таких условиях accuracy~\eqref{eq:macro-f1} как~основной
+метрики маскирует деградацию качества на~редких классах, поэтому
+основной метрикой выбора и~активации модели в~работе принят
+macro-F1~\eqref{eq:macro-f1}. На~уровне обучения дисбаланс компенсируется
+взвешиванием функции потерь по~частоте классов в~training snapshot.
 
-С помощью \verb+nomenclature+ можно включать в~список сокращения,
-не~используя их~в~тексте.
-% запись сокращения в список происходит командой \nomenclature,
-% а не употреблением самого сокращения
-\nomenclature{FEM}{finite element method, метод конечных элементов}
-\nomenclature{FIT}{finite integration technique, метод конечных интегралов}
-\nomenclature{FMM}{fast multipole method, быстрый метод многополюсника}
-\nomenclature{FVTD}{finite volume time-domain, метод конечных объёмов
-    во~временной области}
-\nomenclature{MLFMA}{multilevel fast multipole algorithm, многоуровневый
-    быстрый алгоритм многополюсника}
-\nomenclature{BEM}{boundary element method, метод граничных элементов}
-\nomenclature{CST MWS}{Computer Simulation Technology Microwave Studio
-    программа для компьютерного моделирования уравнен Максвелла}
-\nomenclature{DDA}{discrete dipole approximation, приближение дискретиных
-    диполей}
-\nomenclature{FDFD}{finite difference frequency domain, метод конечных
-    разностей в~частотной области}
-\nomenclature{FDTD}{finite difference time domain, метод конечных разностей
-    во~временной области}
-\nomenclature{MoM}{method of moments, метод моментов}
-\nomenclature{MSTM}{multiple sphere T-Matrix, метод Т-матриц для множества
-    сфер}
-\nomenclature{PSTD}{pseudospectral time domain method, псевдоспектральный метод
-    во~временной области}
-\nomenclature{TLM}{transmission line matrix method, метод матриц линий передач}
+Свойства потока писем меняются со~временем: появляются новые проекты
+и~отправители, меняются форматы автоматических уведомлений, отдельные
+классы теряют активность. Это явление известно как~concept drift
+\autocite{Gama2014ConceptDrift} и~представлено в~смежной задаче
+организации почты, в~частности в~подходе EmFORE, реализующем явное
+обновление правил классификации при~изменении распределения признаков
+\autocite{Singh2023EmFORE}. В~настоящей работе concept drift
+учитывается двумя механизмами: накоплением сообщений в~категории
+\texttt{other} как~индикатора расхождения активной модели с~текущим
+распределением писем и~периодическим переобучением классификатора
+на~обновлённом training dataset snapshot после ручной проверки
+накопленных примеров. Условия активации новой версии модели формализуются
+как~quality gates и~детально рассматриваются в~главе~\ref{ch:ch2}.
+
+% TODO: 3.3 Методы представления текста для классификации
+% TODO: 3.4 Методы классификации
+% TODO: 3.5 Методы кластеризации для bootstrap классов
+% TODO: 3.6 Сравнительный анализ существующих систем
+% TODO: 3.7 Постановка задачи разработки
 
 \FloatBarrier
