@@ -462,6 +462,10 @@ Focused~Inbox в~Microsoft Outlook~\autocite{Microsoft2024FocusedInbox} дели
 выполняются на~стороне серверов сервиса, что не~совместимо с~требованием locality
 из~раздела~\ref{sec:ch1/domain}.
 
+Многоязычность системы в~документации не~специфицирована, а~обновление модели
+по~сигналам чтения и~переноса писем реализует адаптацию, но~не~декларируется
+как~явный механизм учёта дрейфа концепций.
+
 \subsection{Gmail Priority Inbox}\label{subsec:ch1/systems/gmail}
 
 Priority~Inbox в~Gmail~\autocite{Aberdeen2010PriorityInbox} использует персонализированный
@@ -471,6 +475,10 @@ Priority~Inbox в~Gmail~\autocite{Aberdeen2010PriorityInbox} используе�
 сводится к~бинарному «importance / not important»; собственные тематические классы
 не~предусмотрены. Серверное исполнение и~использование внешней инфраструктуры также
 исключают применение системы в~постановке настоящей работы.
+
+Как~и~в~Focused~Inbox, многоязычное поведение отдельно не~описано,
+а~онлайн-дообучение обеспечивает адаптацию к~пользователю без~явной модели
+дрейфа концепций.
 
 \subsection{TaskTracer}\label{subsec:ch1/systems/tasktracer}
 
@@ -511,10 +519,10 @@ Multilingual-применение в~работе явно не~декларир
             Система                      & \makecell{Перс.\\классы\tnote{1}} & \makecell{Multi-\\lingual} & \makecell{Loca-\\lity} & \makecell{\texttt{other}\tnote{2}} & \makecell{Concept\\drift} & \makecell[l]{Источник\\классов} \\
             \hline
             Focused Inbox~\autocite{Microsoft2024FocusedInbox}
-                                         & \(-\)\tnote{3}               & \(\pm\)      & \(-\)        & \(-\)                   & \(+\)         & встроенная бинарная \\
+                                         & \(-\)\tnote{3}               & н/д          & \(-\)        & \(-\)                   & \(\pm\)\tnote{4} & встроенная бинарная \\
             \hline
             Priority Inbox~\autocite{Aberdeen2010PriorityInbox}
-                                         & \(-\)\tnote{3}               & \(\pm\)      & \(-\)        & \(-\)                   & \(+\)         & встроенная бинарная \\
+                                         & \(-\)\tnote{3}               & н/д          & \(-\)        & \(-\)                   & \(\pm\)\tnote{4} & встроенная бинарная \\
             \hline
             TaskTracer~\autocite{Keiser2009TaskTracer}
                                          & \(+\)                        & \(-\)        & \(+\)        & \(-\)                   & \(+\)         & пользова\-тельские проекты \\
@@ -529,6 +537,7 @@ Multilingual-применение в~работе явно не~декларир
             \item[1] Произвольный набор тематических классов, заданный пользователем.
             \item[2] Явная категория для сообщений вне устойчивых классов с~накоплением для переобучения.
             \item[3] Поддерживается только бинарное разделение important/other.
+            \item[4] Адаптация по~неявным сигналам пользователя; явный механизм учёта дрейфа концепций отсутствует.
         \end{tablenotes}
     \end{threeparttable}
 \end{table}
