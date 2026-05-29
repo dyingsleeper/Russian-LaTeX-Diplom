@@ -1,0 +1,33 @@
+\begin{tikzpicture}[
+        thick,
+        >=stealth,
+        node distance=10mm and 12mm,
+        layer/.style={
+                draw,
+                rounded corners=2pt,
+                align=center,
+                minimum height=14mm,
+                minimum width=44mm,
+                inner sep=4pt,
+                font=\small,
+            },
+        example/.style={
+                draw=none,
+                align=center,
+                font=\scriptsize\itshape,
+            },
+    ]
+    \node[layer]                                    (count)   {Счётные\\(BoW, TF-IDF)};
+    \node[layer, right=of count]                    (static)  {Статичные\\(word2vec, GloVe, fastText)};
+    \node[layer, right=of static]                   (context) {Контекстные\\(BERT, XLM-R)};
+    \node[layer, right=of context]                  (multi)   {Multilingual\\(SBERT-multi, LaBSE)};
+
+    \node[example, below=4mm of count]   (ex1) {интерпретируемость,\\один язык};
+    \node[example, below=4mm of static]  (ex2) {семантика слова,\\subword $\to$ OOV};
+    \node[example, below=4mm of context] (ex3) {контекст,\\fine-tuning};
+    \node[example, below=4mm of multi]   (ex4) {общее пространство\\ru + en};
+
+    \draw[->] (count)   -- (static);
+    \draw[->] (static)  -- (context);
+    \draw[->] (context) -- (multi);
+\end{tikzpicture}
