@@ -67,8 +67,8 @@
    `email_labels`; плюс две для серверной стороны готовой системы:
    `email_predictions` (предсказание: письмо, версия модели, класс/`other`,
    уверенность, причина `other`, использованный порог) и `model_versions`
-   (версия модели, артефакт, статус active/archived, метрики macro-F1, покрытие,
-   per-language F1, активация по quality gates).
+   (версия модели, артефакт, статус active/archived, метрики macro-F1,
+   взвешенный F1, покрытие, активация по quality gates).
 6. **bootstrap против run.**
    - `bootstrap` выполняется **только при первом запуске** приложения и
      **принудительно** запускает кластеризацию и начальное формирование классов:
@@ -177,7 +177,7 @@ Argilla как локальный инструмент ревью. Пользо�
 `oid,text,label`, полученном из `email_labels`; собственный словарь и обучаемые
 эмбеддинги, mean-pooling, линейная голова; артефакты `model.pt`, `vocab.json`,
 `label_mapping.json`, `metrics.json`, `training_config.json`; метрики `accuracy`,
-`macro_f1`, `weighted_f1`, покрытие и per-language F1; версии в `model_versions`,
+`macro_f1`, `weighted_f1` и покрытие; версии в `model_versions`,
 активация по quality gates. Инференс (`classify_email`): загрузка активной
 версии, предсказание, порог `τ`, запись в `email_predictions`, низкоуверенные →
 `other`. Цикл переобучения: `|other| ≥ N` → кластеризация буфера `other` →
