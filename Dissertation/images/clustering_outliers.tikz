@@ -11,7 +11,7 @@
 
     \begin{scope}[local bounding box=left]
         \node[panel] (Lframe) at (0,0) {};
-        \node[anchor=north, font=\small] at (Lframe.north) {а) k-means: все точки приписаны};
+        \node[anchor=south, font=\scriptsize, yshift=1.2mm] at (Lframe.north) {а) k-means: все точки приписаны};
         % три кластера + «выбросы», но все покрашены
         \foreach \x/\y in {-1.6/0.7, -1.2/1.1, -1.8/0.4, -1.4/0.2, -1.1/0.9}
             \node[cluster1] at (\x,\y) {};
@@ -26,7 +26,7 @@
 
     \begin{scope}[xshift=72mm, local bounding box=right]
         \node[panel] (Rframe) at (0,0) {};
-        \node[anchor=north, font=\small] at (Rframe.north) {б) HDBSCAN: часть точек "--- шум};
+        \node[anchor=south, font=\scriptsize, yshift=1.2mm] at (Rframe.north) {б) HDBSCAN: часть точек "--- шум};
         % те же три кластера
         \foreach \x/\y in {-1.6/0.7, -1.2/1.1, -1.8/0.4, -1.4/0.2, -1.1/0.9}
             \node[cluster1] at (\x,\y) {};
