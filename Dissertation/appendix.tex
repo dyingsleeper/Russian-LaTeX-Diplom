@@ -116,6 +116,53 @@ cacheSolve <- function(x, ...) {
 \lstinputlisting[lastline=78,language={R},caption={Листинг из внешнего файла},label={lst:external1}]{listings/run_analysis.R}
 \endgroup
 
+\section{Полные модули системы классификации электронной почты}\label{app:A/modules}
+
+В данном приложении приведены полные тексты ключевых модулей системы, фрагменты
+которых обсуждались в~главе~\ref{ch:ch3}.
+
+\begingroup
+\captiondelim{ }
+\lstinputlisting[language={Python},%
+    caption={Модуль токенизации текста (\texttt{preprocessing.py})},%
+    label={lst:app/preprocessing}]{listings/preprocessing.py}
+\endgroup
+
+\begingroup
+\captiondelim{ }
+\lstinputlisting[language={Python},%
+    caption={Модуль нормализации писем (\texttt{normalization.py})},%
+    label={lst:app/normalization}]{listings/normalization.py}
+\endgroup
+
+\begingroup
+\captiondelim{ }
+\lstinputlisting[language={Python},%
+    caption={Подбор гиперпараметров HDBSCAN (\texttt{tuner.py})},%
+    label={lst:app/tuner}]{listings/tuner.py}
+\endgroup
+
+\begingroup
+\captiondelim{ }
+\lstinputlisting[language={Python},%
+    caption={Нейросетевой классификатор (\texttt{text\_classifier.py})},%
+    label={lst:app/text-classifier}]{listings/text_classifier.py}
+\endgroup
+
+\begingroup
+\captiondelim{ }
+\lstinputlisting[language={Python},%
+    caption={Применение модели и порог уверенности (\texttt{predict.py})},%
+    label={lst:app/predict}]{listings/predict.py}
+\endgroup
+
+\begingroup
+\captiondelim{ }
+\lstinputlisting[language={Python},%
+    caption={Метрики качества (\texttt{metrics.py})},%
+    label={lst:app/metrics}]{listings/metrics.py}
+\endgroup
+
 \chapter{Очень длинное название второго приложения, в~котором продемонстрирована работа с~длинными таблицами}\label{app:B}
 
 \section{Подраздел приложения}\label{app:B1}
