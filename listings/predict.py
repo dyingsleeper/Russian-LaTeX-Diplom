@@ -16,6 +16,28 @@ def top_label(logits: Sequence[float], labels: Sequence[str]) -> str:
     return labels[index]
 
 
+def softmax(logits: Sequence[float]) -> list[float]:
+    import math
+
+    maximum = max(logits)
+    exps = [math.exp(value - maximum) for value in logits]
+    total = sum(exps)
+    return [value / total for value in exps]
+
+
+def apply_threshold(
+    probabilities: Sequence[float],
+    labels: Sequence[str],
+    *,
+    tau: float,
+    other_label: str = "other",
+) -> tuple[str, float]:
+    best_index = max(range(len(probabilities)), key=lambda i: probabilities[i])
+    confidence = probabilities[best_index]
+    label = labels[best_index] if confidence >= tau else other_label
+    return label, confidence
+
+
 @dataclass
 class SavedTextClassifier:
     model: Any
@@ -41,6 +63,30 @@ class SavedTextClassifier:
             predictions = logits.argmax(dim=1).cpu().tolist()
 
         return [self.labels[int(index)] for index in predictions]
+
+    def predict_proba(self, texts: Sequence[str]) -> list[list[float]]:
+        import torch
+
+        self.model.eval()
+        encoded = [encode_text(text, self.vocabulary, self.max_length) for text in texts]
+        masks = [attention_mask(input_ids) for input_ids in encoded]
+        if not encoded:
+            return []
+        torch_device = torch.device(self.device)
+        with torch.no_grad():
+            input_ids = torch.tensor(encoded, dtype=torch.long).to(torch_device)
+            attention_masks = torch.tensor(masks, dtype=torch.long).to(torch_device)
+            logits = self.model(input_ids, attention_masks)
+            probabilities = torch.softmax(logits, dim=1).cpu().tolist()
+        return [list(map(float, row)) for row in probabilities]
+
+    def predict_with_threshold(
+        self, texts: Sequence[str], *, tau: float, other_label: str = "other"
+    ) -> list[tuple[str, float]]:
+        return [
+            apply_threshold(row, self.labels, tau=tau, other_label=other_label)
+            for row in self.predict_proba(texts)
+        ]
 
 
 def load_saved_classifier(artifact_dir: str | Path, device: str = "cpu") -> SavedTextClassifier:
