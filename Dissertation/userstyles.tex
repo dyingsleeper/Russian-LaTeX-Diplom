@@ -302,3 +302,10 @@
 \renewcommand{\chi}{\upchi}
 \renewcommand{\psi}{\uppsi}
 \renewcommand{\omega}{\upomega}
+
+% --- Черновые плейсхолдеры главы 3 (удалить при подстановке реальных данных) ---
+% Заметный плейсхолдер значения: легко ищется по "\ph{" и виден красным.
+\newcommand{\ph}[1]{\textcolor{red}{\textbf{\(\langle\)#1\(\rangle\)}}}
+% Рамка-заглушка под будущий рисунок фиксированной высоты.
+\newcommand{\phbox}[2][0.75\textwidth]{%
+    \fbox{\parbox[c][5cm][c]{#1}{\centering\textcolor{red}{\textbf{[#2]}}}}}
