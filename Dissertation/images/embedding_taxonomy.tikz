@@ -20,11 +20,11 @@
     \node[layer]                                    (count)   {Счётные\\(BoW, TF-IDF)};
     \node[layer, right=of count]                    (static)  {Статичные\\(word2vec, GloVe, fastText)};
     \node[layer, right=of static]                   (context) {Контекстные\\(BERT, XLM-R)};
-    \node[layer, right=of context]                  (multi)   {Multilingual\\(SBERT-multi, LaBSE)};
+    \node[layer, right=of context]                  (multi)   {Многоязычные\\(SBERT-multi, LaBSE)};
 
     \node[example, below=4mm of count]   (ex1) {интерпретируемость,\\один язык};
-    \node[example, below=4mm of static]  (ex2) {семантика слова,\\subword $\to$ OOV};
-    \node[example, below=4mm of context] (ex3) {контекст,\\fine-tuning};
+    \node[example, below=4mm of static]  (ex2) {семантика слова,\\подслова $\to$ OOV};
+    \node[example, below=4mm of context] (ex3) {контекст,\\дообучение};
     \node[example, below=4mm of multi]   (ex4) {общее пространство\\ru + en};
 
     \draw[->] (count)   -- (static);

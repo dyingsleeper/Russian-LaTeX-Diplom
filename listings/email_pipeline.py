@@ -4,12 +4,12 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Any, Literal
 
-from diplom_ai.queueing.contracts import (
+from app.queueing.contracts import (
     PipelineTaskRepository,
     TaskDraft,
 )
-from diplom_ai.queueing.tasks import DrainSummary, HandlerContext
-from diplom_ai.storage.repositories import EmailRepository
+from app.queueing.tasks import DrainSummary, HandlerContext
+from app.storage.repositories import EmailRepository
 
 ClusterMode = Literal["never", "auto", "always"]
 
