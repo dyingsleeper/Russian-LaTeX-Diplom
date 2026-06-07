@@ -31,21 +31,21 @@
     \usebeamerfont{date}\insertdate\par
 }
 
-%\title{\small{Название презентации}}
-\title{\thesisTitle}
+\title{\vkrTitle}
 \author{%
     \texorpdfstring{%
-        \emph{Выступающий:}~\thesisAuthorShort\\%
-        \emph{Руководитель:}~\supervisorRegaliaShort~\supervisorFioShort\\%
-        %
-    }{\thesisAuthor}%
+        \emph{Студент:}~\vkrStudentFullName, группа~\vkrStudentGroup\\%
+        \emph{Руководитель:}~\vkrSupervisorPosition, \vkrSupervisorDegree\\%
+        \vkrSupervisorFullName%
+    }{\vkrStudentFullName}%
 }
-\date{\texorpdfstring{\thesisCity, \thesisYear}{}}
-\institute{\texorpdfstring{\thesisOrganization}{}}
+\date{\texorpdfstring{\vkrCity, \vkrYear}{}}
+\institute{\texorpdfstring{\vkrUniversity\\\vkrInstitute}{}}
 \IfFileExists{images/logo.pdf}{
     \titlegraphic{\includegraphics[width=\textwidth]{images/logo}}
     \ifnumequal{\value{logoother}}{1}{
         \logo{\includegraphics[width=0.15\textwidth]{images/logo}}
     }{}
 }{}
-\subtitle{Представление на соискание учёной степени \thesisDegree\ по специальности \thesisSpecialtyNumber\ \thesisSpecialtyTitle}
+\subtitle{\vkrWorkKind\\
+Направление \vkrDirectionCode\ <<\vkrDirectionTitle>>}
