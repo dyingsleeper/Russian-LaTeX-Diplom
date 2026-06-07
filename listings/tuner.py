@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import numpy as np
 
-from app.clustering.pipeline import (
+from diplom_ai.clustering.pipeline import (
     HdbscanParams,
     TunerConfig,
     hdbscan_inputs_for_metric,

@@ -1,0 +1,72 @@
+\begin{tikzpicture}[
+        thick,
+        >=stealth,
+        node distance=9mm and 10mm,
+        block/.style={
+                draw,
+                rounded corners=2pt,
+                align=center,
+                minimum height=11mm,
+                minimum width=24mm,
+                inner sep=3pt,
+                font=\small,
+            },
+        decision/.style={
+                draw,
+                diamond,
+                aspect=2.2,
+                align=center,
+                inner sep=1pt,
+                font=\small,
+            },
+        leaf/.style={
+                draw,
+                rounded corners=2pt,
+                align=center,
+                minimum height=11mm,
+                minimum width=24mm,
+                inner sep=3pt,
+                font=\small,
+                fill=black!4,
+            },
+    ]
+    % Верхний ряд: приём и классификация входящей почты
+    \node[block]                          (ingest)   {IMAP\\ingest};
+    \node[block, right=of ingest]         (norm)     {normalize};
+    \node[block, right=of norm]           (embed)    {embed\\(bge-m3)};
+    \node[block, right=of embed]          (classify) {classify\\(порог \( \tau \))};
+    \node[leaf, right=of classify]        (pred)     {класс или\\\texttt{other}};
+
+    \draw[->] (ingest) -- (norm);
+    \draw[->] (norm)   -- (embed);
+    \draw[->] (embed)  -- (classify);
+    \draw[->] (classify) -- (pred);
+
+    % Триггер дрейфа концепций
+    \node[decision, below=24mm of classify] (dec)  {\( |\texttt{other}| \geqslant N \)?};
+    \node[align=center, font=\scriptsize, right=12mm of dec] (cont) {продолжать\\наблюдение};
+
+    \draw[->] (classify) -- node[right, font=\scriptsize] {низкоуверенные \(\to\) \texttt{other}} (dec);
+    \draw[->] (dec) -- node[above, font=\scriptsize] {нет} (cont);
+
+    % Нижний ряд: формирование/обновление классов и прототипов
+    \node[block, below=50mm of ingest]    (cluster)  {cluster\\буфера \texttt{other}};
+    \node[block, right=of cluster]         (export)   {export\\Argilla};
+    \node[leaf, right=of export]           (manual)   {ручная\\разметка\\(\texttt{pending})};
+    \node[block, right=of manual]          (import)   {import\\Argilla};
+    \node[block, right=of import]          (fit)      {fit\\prototypes};
+    \node[leaf, right=of fit]              (activate) {активация\\набора};
+
+    \draw[->] (cluster) -- (export);
+    \draw[->] (export)  -- (manual);
+    \draw[->] (manual)  -- (import);
+    \draw[->] (import)  -- (fit);
+    \draw[->] (fit)     -- (activate);
+
+    \draw[->] (dec.west) -| node[pos=0.25, above, font=\scriptsize] {да} (cluster.north);
+    \draw[->] (activate.north) |- node[pos=0.4, right, font=\scriptsize] {активные прототипы} (pred.east);
+
+    % Первый запуск (холодный старт): принудительно инициирует формирование классов
+    \node[align=center, font=\scriptsize, left=9mm of cluster] (boot) {первый запуск\\(холодный старт)};
+    \draw[->, dashed] (boot) -- (cluster);
+\end{tikzpicture}

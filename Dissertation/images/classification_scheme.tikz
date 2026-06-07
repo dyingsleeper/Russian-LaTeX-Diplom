@@ -1,0 +1,47 @@
+\begin{tikzpicture}[
+        thick,
+        >=stealth,
+        node distance=8mm and 10mm,
+        block/.style={
+                draw,
+                rounded corners=2pt,
+                align=center,
+                minimum height=10mm,
+                minimum width=28mm,
+                inner sep=4pt,
+                font=\small,
+            },
+        decision/.style={
+                draw,
+                diamond,
+                aspect=2,
+                align=center,
+                inner sep=2pt,
+                font=\small,
+            },
+        leaf/.style={
+                draw,
+                rounded corners=2pt,
+                align=center,
+                minimum height=9mm,
+                minimum width=24mm,
+                inner sep=4pt,
+                font=\small,
+                fill=black!4,
+            },
+    ]
+    \node[block]                                    (msg)    {Сообщение \( x \in X \)\\(MIME, заголовки, тело)};
+    \node[block, right=of msg]                      (norm)   {Нормализация\\\texttt{normalized\_text}};
+    \node[block, right=of norm]                     (emb)    {Векторное\\представление \( \varphi(x) \)};
+    \node[block, below=18mm of emb]                 (clf)    {Модель оценки\\уверенности\\\( g_\Theta \colon \mathbb{R}^{d} \to \mathbb{R}^{K} \)};
+    \node[decision, left=of clf]                    (thr)    {\( \max_k s_k \geqslant \tau \)?};
+    \node[leaf, left=of thr, yshift=10mm]           (label)  {Класс \( y_k \)\\\(+\)~оценка};
+    \node[leaf, left=of thr, yshift=-10mm]          (other)  {\texttt{other}\\(буфер обратной связи)};
+
+    \draw[->] (msg)  -- (norm);
+    \draw[->] (norm) -- (emb);
+    \draw[->] (emb)  -- (clf);
+    \draw[->] (clf)  -- (thr);
+    \draw[->] (thr.west) |- node[above, font=\scriptsize, pos=0.75] {да} (label.east);
+    \draw[->] (thr.west) |- node[below, font=\scriptsize, pos=0.75] {нет} (other.east);
+\end{tikzpicture}

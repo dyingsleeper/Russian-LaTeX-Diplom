@@ -4,7 +4,7 @@ import re
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
-from app.annotation.contracts import (
+from diplom_ai.annotation.contracts import (
     NEW_CLASS_SENTINEL,
     AnnotationBatchStatus,
     AnnotationError,
@@ -14,10 +14,10 @@ from app.annotation.contracts import (
     EmailLabelDraft,
     ImportSummary,
 )
-from app.storage.repositories import AnnotationRepository
+from diplom_ai.storage.repositories import AnnotationRepository
 
 if TYPE_CHECKING:
-    from app.annotation.argilla_client import ArgillaClient
+    from diplom_ai.annotation.argilla_client import ArgillaClient
 
 _WHITESPACE_RE = re.compile(r"\s+")
 

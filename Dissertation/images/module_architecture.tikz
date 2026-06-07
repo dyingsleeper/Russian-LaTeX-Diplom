@@ -1,0 +1,60 @@
+\begin{tikzpicture}[
+        thick,
+        >=stealth,
+        node distance=6mm and 7mm,
+        mod/.style={
+                draw,
+                rounded corners=2pt,
+                align=center,
+                minimum height=12mm,
+                minimum width=24mm,
+                inner sep=3pt,
+                font=\small,
+            },
+        ctrl/.style={
+                draw,
+                rounded corners=2pt,
+                align=center,
+                minimum height=9mm,
+                minimum width=40mm,
+                inner sep=3pt,
+                font=\small,
+                fill=black!4,
+            },
+        store/.style={
+                draw,
+                rounded corners=2pt,
+                align=center,
+                minimum height=11mm,
+                inner sep=3pt,
+                font=\small,
+                fill=black!4,
+            },
+    ]
+    \node[ctrl]                                            (orch)  {orchestration\\(управление процессом)};
+    \node[ctrl, below=of orch]                             (queue) {queueing\\очередь \texttt{pipeline\_tasks}};
+
+    \node[mod, below=12mm of queue.south, anchor=north, xshift=-52mm] (email) {email\\синхронизация,\\нормализация};
+    \node[mod, right=of email]                             (clu)   {clustering\\эмбеддинги,\\HDBSCAN / KMeans};
+    \node[mod, right=of clu]                               (ann)   {annotation\\Argilla:\\экспорт / импорт};
+    \node[mod, right=of ann]                               (clf)   {classifier\\прототипы,\\порог};
+    \node[mod, right=of clf]                               (eval)  {evaluation\\метрики,\\дрейф};
+
+    \node[store, below=12mm of email.south west, anchor=north west, minimum width=147mm]
+                                                           (store) {storage "--- PostgreSQL\\(письма, нормализованные тексты, эмбеддинги, кластеры, метки, прототипы)};
+
+    \draw[->] (orch) -- (queue);
+    \draw[->] (email) -- (clu);
+    \draw[->] (clu)   -- (ann);
+    \draw[->] (ann)   -- (clf);
+    \draw[->] (clf)   -- (eval);
+
+    \draw[->] (queue.south) -| (email.north);
+    \draw[->] (queue.south) -| (clf.north);
+
+    \draw[<->, dashed] (email) -- (email |- store.north);
+    \draw[<->, dashed] (clu)   -- (clu   |- store.north);
+    \draw[<->, dashed] (ann)   -- (ann   |- store.north);
+    \draw[<->, dashed] (clf)   -- (clf   |- store.north);
+    \draw[<->, dashed] (eval)  -- (eval  |- store.north);
+\end{tikzpicture}

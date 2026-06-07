@@ -4,10 +4,10 @@ import re
 import unicodedata
 from dataclasses import dataclass
 
-from app.data.preprocessing import normalize_text
-from app.email.contracts import NormalizedEmailDraft, RawEmailRecord, TextQuality
-from app.email.parsing import extract_best_text, parse_email_bytes
-from app.storage.repositories import EmailRepository
+from diplom_ai.data.preprocessing import normalize_text
+from diplom_ai.email.contracts import NormalizedEmailDraft, RawEmailRecord, TextQuality
+from diplom_ai.email.parsing import extract_best_text, parse_email_bytes
+from diplom_ai.storage.repositories import EmailRepository
 
 
 @dataclass(frozen=True)

@@ -4,8 +4,8 @@ from dataclasses import dataclass
 
 import numpy as np
 
-from app.classifier.contracts import Prediction, PrototypeWithClass
-from app.classifier.prototypes import l2_normalize
+from diplom_ai.classifier.contracts import Prediction, PrototypeWithClass
+from diplom_ai.classifier.prototypes import l2_normalize
 
 
 @dataclass(frozen=True)

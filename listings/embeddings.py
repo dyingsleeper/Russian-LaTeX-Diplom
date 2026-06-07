@@ -8,12 +8,12 @@ from typing import Protocol
 
 import numpy as np
 
-from app.clustering.contracts import (
+from diplom_ai.clustering.contracts import (
     EmailEmbeddingDraft,
     SourceFilter,
 )
-from app.email.contracts import NormalizedEmailRecord
-from app.storage.repositories import ClusteringRepository
+from diplom_ai.email.contracts import NormalizedEmailRecord
+from diplom_ai.storage.repositories import ClusteringRepository
 
 
 @dataclass(frozen=True)
