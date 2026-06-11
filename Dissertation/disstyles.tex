@@ -13,27 +13,29 @@
 %% И правит сразу и в таблицах (если со звёздочкой)
 %\DoubleSpacing*     % Двойной интервал
 \OnehalfSpacing*    % Полуторный интервал
-%\setSpacing{1.42}   % Полуторный интервал, подобный Ворду (возможно, стоит включать вместе с предыдущей строкой)
+\setSpacing{1.42}   % Полуторный интервал, подобный Ворду (возможно, стоит включать вместе с предыдущей строкой)
 
 %%% Макет страницы %%%
 % Выставляем значения полей (ГОСТ 7.0.11-2011, 5.3.7)
 \geometry{a4paper, top=2cm, bottom=2cm, left=3cm, right=1cm, nomarginpar} %, heightrounded, showframe
 \setlength{\topskip}{0pt}   %размер дополнительного верхнего поля
-\setlength{\footskip}{12.3pt} % снимет warning, согласно https://tex.stackexchange.com/a/334346
+\setlength{\footskip}{10mm} % отступ от нижней границы текстового блока до номера страницы
 
 %%% Выравнивание и переносы %%%
 %% http://tex.stackexchange.com/questions/241343/what-is-the-meaning-of-fussy-sloppy-emergencystretch-tolerance-hbadness
 %% http://www.latex-community.org/forum/viewtopic.php?p=70342#p70342
 \tolerance 1414
 \hbadness 1414
-\emergencystretch 1.5em % В случае проблем регулировать в первую очередь
+\emergencystretch 3em % В случае проблем регулировать в первую очередь
+\hyphenpenalty=10000
+\exhyphenpenalty=10000
 \hfuzz 0.3pt
 \vfuzz \hfuzz
 %\raggedbottom
 %\sloppy                 % Избавляемся от переполнений
 \clubpenalty=10000      % Запрещаем разрыв страницы после первой строки абзаца
 \widowpenalty=10000     % Запрещаем разрыв страницы после последней строки абзаца
-\brokenpenalty=4991     % Ограничение на разрыв страницы, если строка заканчивается переносом
+\brokenpenalty=10000     % Ограничение на разрыв страницы, если строка заканчивается переносом
 
 %%% Блок управления параметрами для выравнивания заголовков в тексте %%%
 \newlength{\otstuplen}

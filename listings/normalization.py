@@ -3,7 +3,6 @@ from __future__ import annotations
 import re
 import unicodedata
 from dataclasses import dataclass
-
 from diplom_ai.data.preprocessing import normalize_text
 from diplom_ai.email.contracts import NormalizedEmailDraft, RawEmailRecord, TextQuality
 from diplom_ai.email.parsing import extract_best_text, parse_email_bytes
@@ -42,7 +41,11 @@ def normalize_raw_email(raw_email: RawEmailRecord) -> NormalizedEmailDraft:
     raw_bytes = raw_email.raw_mime_path.read_bytes()
     parsed = parse_email_bytes(raw_bytes)
     subject = normalize_text(parsed.subject or raw_email.subject_raw)
-    body_text = _clean_email_body(_strip_reply_and_signature(extract_best_text(parsed.message)))
+    body_text = _clean_email_body(
+        _strip_reply_and_signature(
+            extract_best_text(parsed.message)
+        )
+    )
     normalized_text = normalize_text(f"{subject} {body_text}".strip())
     return NormalizedEmailDraft(
         raw_email_id=raw_email.id,
