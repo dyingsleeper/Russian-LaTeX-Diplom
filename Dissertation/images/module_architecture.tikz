@@ -1,60 +1,62 @@
 \begin{tikzpicture}[
         thick,
         >=stealth,
-        node distance=6mm and 7mm,
-        mod/.style={
+        block/.style={
                 draw,
                 rounded corners=2pt,
                 align=center,
+                text width=24mm,
                 minimum height=12mm,
-                minimum width=24mm,
                 inner sep=3pt,
-                font=\small,
+                font=\scriptsize,
             },
         ctrl/.style={
                 draw,
                 rounded corners=2pt,
                 align=center,
-                minimum height=9mm,
-                minimum width=40mm,
+                text width=34mm,
+                minimum height=10mm,
                 inner sep=3pt,
-                font=\small,
+                font=\scriptsize,
                 fill=black!4,
             },
         store/.style={
                 draw,
                 rounded corners=2pt,
                 align=center,
-                minimum height=11mm,
+                text width=128mm,
+                minimum height=12mm,
                 inner sep=3pt,
-                font=\small,
+                font=\scriptsize,
                 fill=black!4,
             },
+        flow/.style={->, thick},
+        dataflow/.style={<->, thick, dashed},
     ]
-    \node[ctrl]                                            (orch)  {orchestration\\(управление процессом)};
-    \node[ctrl, below=of orch]                             (queue) {queueing\\очередь \texttt{pipeline\_tasks}};
 
-    \node[mod, below=12mm of queue.south, anchor=north, xshift=-52mm] (email) {email\\синхронизация,\\нормализация};
-    \node[mod, right=of email]                             (clu)   {clustering\\эмбеддинги,\\HDBSCAN / KMeans};
-    \node[mod, right=of clu]                               (ann)   {annotation\\Argilla:\\экспорт / импорт};
-    \node[mod, right=of ann]                               (clf)   {classifier\\прототипы,\\порог};
-    \node[mod, right=of clf]                               (eval)  {evaluation\\метрики,\\дрейф};
+    \node[ctrl] (control) at (-60mm, 32mm) {Управление\\процессом};
+    \node[ctrl] (queue)   at (-60mm, 17mm) {Очередь\\этапов};
 
-    \node[store, below=12mm of email.south west, anchor=north west, minimum width=147mm]
-                                                           (store) {storage "--- PostgreSQL\\(письма, нормализованные тексты, эмбеддинги, кластеры, метки, прототипы)};
+    \node[block] (email) at (-60mm, 0mm) {Синхронизация\\и нормализация};
+    \node[block] (embed) at (-30mm, 0mm) {Построение\\эмбеддингов};
+    \node[block] (clust) at (  0mm, 0mm) {Кластеризация};
+    \node[block] (ann)   at ( 30mm, 0mm) {Ручная\\проверка};
+    \node[block] (clf)   at ( 60mm, 0mm) {Классификация\\и оценка};
 
-    \draw[->] (orch) -- (queue);
-    \draw[->] (email) -- (clu);
-    \draw[->] (clu)   -- (ann);
-    \draw[->] (ann)   -- (clf);
-    \draw[->] (clf)   -- (eval);
+    \node[store] (store) at (0mm, -28mm)
+        {PostgreSQL-хранилище\\письма, нормализованные тексты, эмбеддинги, кластеры, метки, версии};
 
-    \draw[->] (queue.south) -| (email.north);
-    \draw[->] (queue.south) -| (clf.north);
+    \draw[flow] (control.south) -- (queue.north);
+    \draw[flow] (queue.south) -- (email.north);
 
-    \draw[<->, dashed] (email) -- (email |- store.north);
-    \draw[<->, dashed] (clu)   -- (clu   |- store.north);
-    \draw[<->, dashed] (ann)   -- (ann   |- store.north);
-    \draw[<->, dashed] (clf)   -- (clf   |- store.north);
-    \draw[<->, dashed] (eval)  -- (eval  |- store.north);
+    \draw[flow] (email.east) -- (embed.west);
+    \draw[flow] (embed.east) -- (clust.west);
+    \draw[flow] (clust.east) -- (ann.west);
+    \draw[flow] (ann.east) -- (clf.west);
+
+    \draw[dataflow] (email.south) -- (email |- store.north);
+    \draw[dataflow] (embed.south) -- (embed |- store.north);
+    \draw[dataflow] (clust.south) -- (clust |- store.north);
+    \draw[dataflow] (ann.south)   -- (ann   |- store.north);
+    \draw[dataflow] (clf.south)   -- (clf   |- store.north);
 \end{tikzpicture}

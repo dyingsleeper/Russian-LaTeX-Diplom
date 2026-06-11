@@ -1,72 +1,56 @@
 \begin{tikzpicture}[
         thick,
         >=stealth,
-        node distance=9mm and 10mm,
-        block/.style={
+        stage/.style={
                 draw,
                 rounded corners=2pt,
                 align=center,
-                minimum height=11mm,
-                minimum width=24mm,
+                text width=45mm,
+                minimum height=10mm,
                 inner sep=3pt,
-                font=\small,
+                font=\scriptsize,
             },
-        decision/.style={
-                draw,
-                diamond,
-                aspect=2.2,
-                align=center,
-                inner sep=1pt,
-                font=\small,
-            },
-        leaf/.style={
-                draw,
-                rounded corners=2pt,
-                align=center,
-                minimum height=11mm,
-                minimum width=24mm,
-                inner sep=3pt,
-                font=\small,
+        check/.style={
+                stage,
                 fill=black!4,
             },
+        action/.style={
+                stage,
+                fill=black!8,
+            },
+        flow/.style={->, thick},
+        note/.style={font=\scriptsize},
     ]
-    % Верхний ряд: приём и классификация входящей почты
-    \node[block]                          (ingest)   {IMAP\\ingest};
-    \node[block, right=of ingest]         (norm)     {normalize};
-    \node[block, right=of norm]           (embed)    {embed\\(bge-m3)};
-    \node[block, right=of embed]          (classify) {classify\\(порог \( \tau \))};
-    \node[leaf, right=of classify]        (pred)     {класс или\\\texttt{other}};
 
-    \draw[->] (ingest) -- (norm);
-    \draw[->] (norm)   -- (embed);
-    \draw[->] (embed)  -- (classify);
-    \draw[->] (classify) -- (pred);
+    \node[stage]  (sync)       at (0mm,    0mm) {Синхронизация\\всех писем};
+    \node[stage]  (norm)       at (0mm,  -16mm) {Нормализация\\всех писем};
+    \node[stage]  (embed)      at (0mm,  -32mm) {Построение\\эмбеддингов};
+    \node[check]  (initcheck)  at (0mm,  -52mm) {Начальные\\кластеры есть?};
+    \node[action] (initrun)    at (66mm, -52mm) {Первоначальная кластеризация писем};
+    \node[check]  (othercheck) at (0mm,  -76mm) {В~\texttt{other}\\больше N писем?};
+    \node[action] (otherrun)   at (66mm, -76mm) {Кластеризация\\писем \texttt{other}};
+    \node[stage]  (export)     at (66mm,-100mm) {Экспорт\\кластеризации\\на разметку};
+    \node[check]  (anncheck)   at (66mm,-124mm) {Есть завершённые\\неимпортированные\\размеченные данные?};
+    \node[action] (importfit)  at (66mm,-148mm) {Импорт разметки\\и запуск\\\texttt{fit-prototypes}};
+    \node[stage]  (classify)   at (0mm, -148mm) {Классификация\\K штук\\писем без класса};
 
-    % Триггер дрейфа концепций
-    \node[decision, below=24mm of classify] (dec)  {\( |\texttt{other}| \geqslant N \)?};
-    \node[align=center, font=\scriptsize, right=12mm of dec] (cont) {продолжать\\наблюдение};
+    \draw[flow] (sync) -- (norm);
+    \draw[flow] (norm) -- (embed);
+    \draw[flow] (embed) -- (initcheck);
 
-    \draw[->] (classify) -- node[right, font=\scriptsize] {низкоуверенные \(\to\) \texttt{other}} (dec);
-    \draw[->] (dec) -- node[above, font=\scriptsize] {нет} (cont);
+    \draw[flow] (initcheck.south) -- node[note, left] {да} (othercheck.north);
+    \draw[flow] (initcheck.east) -- node[note, above] {нет} (initrun.west);
+    \draw[flow] (initrun.east) -- ++(8mm, 0mm) |- (export.east);
 
-    % Нижний ряд: формирование/обновление классов и прототипов
-    \node[block, below=50mm of ingest]    (cluster)  {cluster\\буфера \texttt{other}};
-    \node[block, right=of cluster]         (export)   {export\\Argilla};
-    \node[leaf, right=of export]           (manual)   {ручная\\разметка\\(\texttt{pending})};
-    \node[block, right=of manual]          (import)   {import\\Argilla};
-    \node[block, right=of import]          (fit)      {fit\\prototypes};
-    \node[leaf, right=of fit]              (activate) {активация\\набора};
+    \draw[flow] (othercheck.south) -- node[note, left, pos=0.15] {нет} (classify.north);
+    \draw[flow] (othercheck.east) -- node[note, above] {да} (otherrun.west);
+    \draw[flow] (otherrun.south) -- (export.north);
 
-    \draw[->] (cluster) -- (export);
-    \draw[->] (export)  -- (manual);
-    \draw[->] (manual)  -- (import);
-    \draw[->] (import)  -- (fit);
-    \draw[->] (fit)     -- (activate);
+    \draw[flow] (export) -- (anncheck);
+    \draw[flow] (anncheck.east) .. controls +(18mm, 6mm) and +(18mm, -6mm) ..
+        node[note, right, pos=0.5] {нет: ожидание} (anncheck.south east);
+    \draw[flow] (anncheck.south) -- node[note, right] {да} (importfit.north);
+    \draw[flow] (importfit.west) -- (classify.east);
 
-    \draw[->] (dec.west) -| node[pos=0.25, above, font=\scriptsize] {да} (cluster.north);
-    \draw[->] (activate.north) |- node[pos=0.4, right, font=\scriptsize] {активные прототипы} (pred.east);
-
-    % Первый запуск (холодный старт): принудительно инициирует формирование классов
-    \node[align=center, font=\scriptsize, left=9mm of cluster] (boot) {первый запуск\\(холодный старт)};
-    \draw[->, dashed] (boot) -- (cluster);
+    \draw[flow] (classify.west) -- ++(-28mm, 0mm) |- node[note, left, pos=0.25] {к шагу 5} (othercheck.west);
 \end{tikzpicture}
