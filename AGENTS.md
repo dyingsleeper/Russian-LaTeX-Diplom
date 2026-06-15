@@ -29,3 +29,7 @@ Recent history uses short, direct commit subjects in English or Russian, for exa
 ## Agent-Specific Instructions
 
 Avoid unrelated formatting churn and generated PDF changes unless preparing a release. Preserve Russian-language text, GOST-related behavior, and existing Makefile option names.
+
+When the user does not specify a target document, treat `Dissertation/` and `dissertation.tex` as the primary work area. Edits to dissertation prose should keep a strict, official academic style without popular-science phrasing, inflated vocabulary, or unsupported conclusions. Write as a student author would: clear, direct, and technically accurate, using complex terminology only when it is necessary and has already been explained or is evident from context.
+
+When adding or revising Russian text, make focused changes: prefer precise formulations over broad general statements, avoid repeated examples, quotations, and phrases across the dissertation, and do not introduce claims that are not present in the user's task. Every added or edited formula must be accompanied by a clear textual explanation, and every variable used in it must be defined near the formula.
