@@ -1,30 +1,22 @@
 \begin{frame}
     \frametitle{Постановка классификации}
-    \begin{columns}[T,onlytextwidth]
-        \begin{column}{0.48\linewidth}
-            \small
-            Пользовательские классы заранее неизвестны:
-            \[
-                Y_{\text{user}}=\{y_1,\dots,y_K\}.
-            \]
-            Если уверенного решения нет, система возвращает служебный исход
-            \texttt{other}:
-            \[
-                \widetilde{Y}=Y_{\text{user}}\cup\{\texttt{other}\}.
-            \]
-            \[
-                f(x)=
-                \begin{cases}
-                    y_{k^*}, & \max_k s_k(x)\geqslant\tau,\\
-                    \texttt{other}, & \max_k s_k(x)<\tau.
-                \end{cases}
-            \]
-        \end{column}
-        \begin{column}{0.50\linewidth}
-            \centering
-            \resizebox{\linewidth}{!}{\input{Dissertation/images/classification_scheme.tikz}}
-        \end{column}
-    \end{columns}
+        \small
+        Пользовательские классы заранее неизвестны:
+        \[
+            Y_{\text{user}}=\{y_1,\dots,y_K\}.
+        \]
+        Если уверенного решения нет, система возвращает служебный исход
+        \texttt{other}:
+        \[
+            \widetilde{Y}=Y_{\text{user}}\cup\{\texttt{other}\}.
+        \]
+        \[
+            f(x)=
+            \begin{cases}
+                y_{k^*}, & \max_k s_k(x)\geqslant\tau,\\
+                \texttt{other}, & \max_k s_k(x)<\tau.
+            \end{cases}
+        \]
 \end{frame}
 
 \section{Проектирование системы}
@@ -42,18 +34,6 @@
 \end{frame}
 
 \begin{frame}
-    \frametitle{Рабочий цикл}
-    \centering
-    \resizebox{0.98\linewidth}{!}{\input{Dissertation/images/pipeline_modes.tikz}}
-
-    \medskip
-    \small
-    Первый запуск формирует классы по~исторической выборке. Далее система
-    классифицирует входящие письма, а~накопление \texttt{other} запускает
-    обновление классов и~прототипов.
-\end{frame}
-
-\begin{frame}
     \frametitle{Данные и экспериментальная установка}
     \centering
     \small
@@ -62,7 +42,7 @@
         Характеристика & Значение \\
         \midrule
         Всего писем после синхронизации & 7107 \\
-        Качество \texttt{ok} / \texttt{too\_short} & 7105 / 2 \\
+        Писем для построения эмбеддингов & 7105 \\
         Доля русскоязычных / англоязычных писем & 0{,}91 / 0{,}09 \\
         Период & 03.2012--05.2026 \\
         \bottomrule
@@ -85,27 +65,25 @@
         \begin{column}{0.47\linewidth}
             \small
             \begin{itemize}
-                \item \texttt{bge-m3} строит единое пространство для русских
-                      и~английских писем.
-                \item HDBSCAN выделяет плотные группы и~шумовые точки.
-                \item Optuna подбирает \texttt{min\_cluster\_size} и
-                      \texttt{min\_samples} по~DBCV с~штрафом за~шум.
+                \item Готовая модель \texttt{BAAI/bge-m3} из~библиотеки
+                      sentence-transformers строит единое пространство
+                      для~русских и~английских писем.
+                \item Готовая библиотечная реализация HDBSCAN выделяет
+                      плотные группы и~шумовые точки.
+                \item Параметры \texttt{min\_cluster\_size} и
+                      \texttt{min\_samples} подбираются оптимизацией
+                      рандомным перебором с~закреплением лучшего варианта.
             \end{itemize}
-
-            \medskip
-            \begin{tabular}{@{}lr@{}}
-                \toprule
-                Параметр & Значение \\
-                \midrule
-                \texttt{min\_cluster\_size} & 8 \\
-                \texttt{min\_samples} & 3 \\
-                Целевая функция & 0{,}906 \\
-                \bottomrule
-            \end{tabular}
         \end{column}
         \begin{column}{0.50\linewidth}
-            \centering
-            \includegraphics[width=\linewidth]{Dissertation/images/optuna_history}
+            \small
+            Подбор параметров:
+            \begin{itemize}
+                \item проверено 100 наборов на~пакете из~200 писем;
+                \item целевая функция учитывала DBCV и~долю шума;
+                \item для эксперимента закреплены
+                      \texttt{min\_cluster\_size}=8 и~\texttt{min\_samples}=3.
+            \end{itemize}
         \end{column}
     \end{columns}
 \end{frame}
@@ -147,7 +125,8 @@
         \begin{column}{0.47\linewidth}
             \small
             \begin{itemize}
-                \item Эксперт проверяет представителей кластеров в~Argilla.
+                \item Проверка представителей кластеров
+                      в~интерфейсе ручной разметки.
                 \item Согласованная метка распространяется на~весь кластер.
                 \item Противоречивые кластеры и~шум переходят в~\texttt{other}.
                 \item Ручная проверка: 345 представителей из~1000 писем.
@@ -182,11 +161,7 @@
     \small
     Для каждого пользовательского класса строится один или несколько
     нормированных прототипов. Оценка класса равна максимальной косинусной
-    близости письма к~его прототипам:
-    \[
-        s_k(x)=\max_{1\leqslant m\leqslant M_k}
-        \langle \widehat{\varphi}(x), c_{k,m}\rangle.
-    \]
+    близости письма к~его прототипам.
 
     \begin{columns}[T,onlytextwidth]
         \begin{column}{0.49\linewidth}
@@ -197,9 +172,9 @@
             \end{itemize}
         \end{column}
         \begin{column}{0.48\linewidth}
-            \begin{block}{Преимущество}
-                Модель не~требует дообучения нейросети и~работает при
-                ограниченном объёме проверенной разметки.
+            \begin{block}{Причина выбора}
+                Прототипная схема не~требует дообучения нейросети и~может
+                применяться при ограниченном объёме проверенной разметки.
             \end{block}
         \end{column}
     \end{columns}
