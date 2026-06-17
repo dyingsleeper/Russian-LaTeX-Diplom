@@ -578,6 +578,15 @@ IDF равен \( \ln(5/(1+1)) \approx 0{,}916 \). В~первом докуме�
 и~не~входит ни~в~один кластер. Благодаря этому HDBSCAN легче отделяет
 устойчивые группы от~одиночных объектов.
 
+\begin{figure}[htbp]
+    \centering
+    \resizebox{\textwidth}{!}{%
+        \input{Dissertation/images/clustering_outliers.tikz}%
+    }
+    \caption{Сравнение принудительного разбиения и выделения шумовых точек при кластеризации}\label{fig:ch1/clustering-outliers}
+\end{figure}
+\FloatBarrier
+
 \section{Уменьшение размерности эмбеддингов}\label{sec:ch1/umap}
 
 Эмбеддинг документа обычно имеет сотни или тысячи координат. Такая размерность
