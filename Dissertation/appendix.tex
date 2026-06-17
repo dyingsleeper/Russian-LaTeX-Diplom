@@ -1,7 +1,21 @@
 \chapter{Полные модули системы классификации электронной почты}\label{app:A}
 
-В данном приложении приведены полные тексты ключевых модулей системы, фрагменты
-которых обсуждались в~главе~\ref{ch:ch3}.
+В данном приложении приведены полные тексты ключевых модулей системы и~файл
+контейнерной конфигурации, на~которые даны ссылки в~главе~\ref{ch:ch3}.
+
+\begingroup
+\captiondelim{ }
+\lstinputlisting[%
+    caption={Файл запуска инфраструктурных контейнеров (\texttt{docker-compose.yml})},%
+    label={lst:app/docker-compose}]{listings/docker-compose.yml}
+\endgroup
+
+\begingroup
+\captiondelim{ }
+\lstinputlisting[language={Python},%
+    caption={Оркестрация этапов обработки (\texttt{email\_pipeline.py})},%
+    label={lst:app/email-pipeline}]{listings/email_pipeline.py}
+\endgroup
 
 \begingroup
 \captiondelim{ }
@@ -20,8 +34,22 @@
 \begingroup
 \captiondelim{ }
 \lstinputlisting[language={Python},%
-    caption={Подбор гиперпараметров HDBSCAN (\texttt{tuner.py})},%
+    caption={Построение векторных представлений (\texttt{embeddings.py})},%
+    label={lst:app/embeddings}]{listings/embeddings.py}
+\endgroup
+
+\begingroup
+\captiondelim{ }
+\lstinputlisting[language={Python},%
+    caption={Подбор параметров HDBSCAN (\texttt{tuner.py})},%
     label={lst:app/tuner}]{listings/tuner.py}
+\endgroup
+
+\begingroup
+\captiondelim{ }
+\lstinputlisting[language={Python},%
+    caption={Импорт меток и распространение по кластерам (\texttt{import\_labels.py})},%
+    label={lst:app/import-labels}]{listings/import_labels.py}
 \endgroup
 
 \begingroup

@@ -1,0 +1,71 @@
+services:
+#  app:
+#    build:
+#      context: .
+#      dockerfile: Dockerfile
+#    image: diplom-ai:local
+#    env_file:
+#      - .env
+#    environment:
+#      DIPLOM_AI_DATABASE_URL: postgresql://diplom_ai:diplom_ai@postgres:5432/diplom_ai
+#    depends_on:
+#      - postgres
+#    volumes:
+#      - ./src:/app/src:ro
+#      - ./configs:/app/configs:ro
+#      - ./data:/app/data
+#      - ./artifacts:/app/artifacts
+#      - ./logs:/app/logs
+#    command: ["diplom-ai", "info"]
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: diplom_ai
+      POSTGRES_USER: diplom_ai
+      POSTGRES_PASSWORD: diplom_ai
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+  adminer:
+    image: adminer:4.8.1
+    environment:
+      ADMINER_DEFAULT_SERVER: postgres
+    depends_on:
+      - postgres
+    ports:
+      - "127.0.0.1:8080:8080"
+
+  argilla-elastic:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.13.4
+    environment:
+      ES_JAVA_OPTS: "-Xms512m -Xmx512m"
+      discovery.type: single-node
+      xpack.security.enabled: "false"
+    volumes:
+      - argilla-es-data:/usr/share/elasticsearch/data
+
+  argilla-redis:
+    image: redis:7-alpine
+
+  argilla-server:
+    image: argilla/argilla-server:v2.5.0
+    environment:
+      ARGILLA_ELASTICSEARCH: http://argilla-elastic:9200
+      ARGILLA_REDIS_URL: redis://argilla-redis:6379/0
+      ARGILLA_AUTH_SECRET_KEY: "${DIPLOM_AI_ARGILLA_AUTH_SECRET:-changeme-32chars-min-key-rotate-me}"
+      USERNAME: "${DIPLOM_AI_ARGILLA_USERNAME:-argilla}"
+      PASSWORD: "${DIPLOM_AI_ARGILLA_PASSWORD:-argilla1234}"
+      API_KEY: "${DIPLOM_AI_ARGILLA_API_KEY:-argilla.apikey}"
+      WORKSPACE: "${DIPLOM_AI_ARGILLA_WORKSPACE:-diplom-ai}"
+    depends_on:
+      - argilla-elastic
+      - argilla-redis
+    ports:
+      - "127.0.0.1:6900:6900"
+
+volumes:
+  postgres-data:
+  argilla-es-data:
