@@ -15,8 +15,6 @@ def grouped_train_test_split(
     test_fraction: float,
     seed: int,
 ) -> tuple[list[int], list[int]]:
-    """Делит индексы items на train/test так, что один кластер целиком попадает
-    либо в train, либо в test (исключает утечку от распространения меток)."""
     if len(items) != len(cluster_ids):
         raise ValueError("items and cluster_ids must be the same length")
     clusters = sorted(set(cluster_ids))
@@ -26,7 +24,10 @@ def grouped_train_test_split(
     train_indices: list[int] = []
     test_indices: list[int] = []
     for index, cluster in enumerate(cluster_ids):
-        (test_indices if cluster in test_clusters else train_indices).append(index)
+        target = (
+            test_indices if cluster in test_clusters else train_indices
+        )
+        target.append(index)
     return train_indices, test_indices
 
 
@@ -37,10 +38,6 @@ def stratified_train_test_split(
     test_fraction: float,
     seed: int,
 ) -> tuple[list[int], list[int]]:
-    """Делит индексы items на train/test, стратифицируя по классу: из каждого класса
-    в test уходит доля test_fraction его примеров. Класс с >= 2 примерами гарантированно
-    представлен и в train, и в test (минимум по одному). Класс с единственным примером
-    целиком уходит в train — иначе для него нельзя построить прототип."""
     if len(items) != len(labels):
         raise ValueError("items and labels must be the same length")
     by_label: dict[str, list[int]] = defaultdict(list)

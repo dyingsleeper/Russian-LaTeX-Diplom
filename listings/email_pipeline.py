@@ -37,51 +37,27 @@ def run_bootstrap_pipeline(
     allow_partial: bool,
     deps: PipelineDependencies,
 ) -> dict[str, Any]:
-    from loguru import logger
-
-    logger.info(
-        "email pipeline bootstrap started mailbox={} cluster_mode={} allow_partial={}",
-        mailbox_id,
-        cluster_mode,
-        allow_partial,
-    )
     summary: dict[str, Any] = {"mailbox": mailbox_id, "mode": "bootstrap"}
-
     deps.task_repository.reset_running_to_pending()
-
-    summary["ingestion"] = _run_ingestion(deps=deps, mailbox_id=mailbox_id)
-
+    summary["ingestion"] = _run_ingestion(
+        deps=deps, mailbox_id=mailbox_id
+    )
     normalization = _run_normalize_stage(deps=deps, mailbox_id=mailbox_id)
     summary["normalization"] = normalization
     if normalization["emails_failed"] > 0 and not allow_partial:
         summary["next_action"] = "fix_failed_tasks"
-        logger.info(
-            "email pipeline bootstrap stopped mailbox={} next_action={}",
-            mailbox_id,
-            summary["next_action"],
-        )
         return summary
 
     embeddings = _run_embed_stage(deps=deps, mailbox_id=mailbox_id)
     summary["embeddings"] = embeddings
     if embeddings["tasks_failed"] > 0:
         summary["next_action"] = "fix_failed_tasks"
-        logger.info(
-            "email pipeline bootstrap stopped mailbox={} next_action={}",
-            mailbox_id,
-            summary["next_action"],
-        )
         return summary
 
     summary["clustering"] = _decide_and_run_clustering(
         deps=deps, mailbox_id=mailbox_id, cluster_mode=cluster_mode
     )
     summary["next_action"] = _bootstrap_next_action(summary)
-    logger.info(
-        "email pipeline bootstrap completed mailbox={} next_action={}",
-        mailbox_id,
-        summary["next_action"],
-    )
     return summary
 
 
@@ -90,17 +66,7 @@ def _run_ingestion(
     deps: PipelineDependencies,
     mailbox_id: str,
 ) -> dict[str, Any]:
-    from loguru import logger
-
-    logger.info("email pipeline ingestion started mailbox={}", mailbox_id)
     result = deps.ingest_imap(mailbox_id=mailbox_id)
-    logger.info(
-        "email pipeline ingestion completed mailbox={} imported={} skipped={} failed={}",
-        mailbox_id,
-        result.imported,
-        result.skipped,
-        result.failed,
-    )
     return {
         "source": "imap",
         "imported": result.imported,
@@ -112,16 +78,8 @@ def _run_ingestion(
 def _run_normalize_stage(
     *, deps: PipelineDependencies, mailbox_id: str
 ) -> dict[str, int]:
-    from loguru import logger
-
-    logger.info("email pipeline normalization started mailbox={}", mailbox_id)
     pending = deps.email_repository.list_raw_emails(
         mailbox_id=mailbox_id, status="pending"
-    )
-    logger.info(
-        "email pipeline normalization pending mailbox={} count={}",
-        mailbox_id,
-        len(pending),
     )
     enqueued = 0
     for raw in pending:
@@ -146,22 +104,12 @@ def _run_normalize_stage(
         "emails_completed": by.get("completed", 0),
         "emails_failed": by.get("failed", 0),
     }
-    logger.info(
-        "email pipeline normalization completed mailbox={} enqueued={} completed={} failed={}",
-        mailbox_id,
-        result["tasks_enqueued"],
-        result["emails_completed"],
-        result["emails_failed"],
-    )
     return result
 
 
 def _run_embed_stage(
     *, deps: PipelineDependencies, mailbox_id: str
 ) -> dict[str, int]:
-    from loguru import logger
-
-    logger.info("email pipeline embeddings started mailbox={}", mailbox_id)
     model, version = deps.embeddings_identity()
     deps.task_repository.enqueue(
         TaskDraft(
@@ -175,11 +123,6 @@ def _run_embed_stage(
         )
     )
     before = deps.eligible_embedding_count(mailbox_id=mailbox_id)
-    logger.info(
-        "email pipeline embeddings before mailbox={} existing={}",
-        mailbox_id,
-        before,
-    )
     drain_summary = deps.drain(
         task_repository=deps.task_repository,
         handler_context=deps.handler_context,
@@ -194,13 +137,6 @@ def _run_embed_stage(
         "emails_computed": max(after - before, 0),
         "emails_skipped": before,
     }
-    logger.info(
-        "email pipeline embeddings completed mailbox={} computed={} skipped={} failed={}",
-        mailbox_id,
-        result["emails_computed"],
-        result["emails_skipped"],
-        result["tasks_failed"],
-    )
     return result
 
 
@@ -210,32 +146,14 @@ def _decide_and_run_clustering(
     mailbox_id: str,
     cluster_mode: ClusterMode,
 ) -> dict[str, Any]:
-    from loguru import logger
-
-    logger.info(
-        "email pipeline clustering started mailbox={} mode={}",
-        mailbox_id,
-        cluster_mode,
-    )
     if cluster_mode == "never":
-        logger.info(
-            "email pipeline clustering completed mailbox={} decision=skipped_by_mode",
-            mailbox_id,
-        )
         return {"decision": "skipped_by_mode"}
     eligible = deps.eligible_embedding_count(mailbox_id=mailbox_id)
-    logger.info(
-        "email pipeline clustering eligible mailbox={} count={}",
-        mailbox_id,
-        eligible,
-    )
     if cluster_mode == "auto":
-        coverage = deps.latest_completed_cluster_coverage(mailbox_id=mailbox_id)
+        coverage = deps.latest_completed_cluster_coverage(
+            mailbox_id=mailbox_id
+        )
         if coverage is not None and coverage >= eligible:
-            logger.info(
-                "email pipeline clustering completed mailbox={} decision=skipped_up_to_date",
-                mailbox_id,
-            )
             return {"decision": "skipped_up_to_date"}
     config_hash = _build_config_hash(deps)
     deps.task_repository.enqueue(
@@ -253,13 +171,7 @@ def _decide_and_run_clustering(
     )
     by = drain_summary.by_task.get("run_clustering", {})
     if by.get("failed"):
-        logger.info(
-            "email pipeline clustering completed mailbox={} decision=failed failed={}",
-            mailbox_id,
-            by["failed"],
-        )
         return {"decision": "failed", "tasks_failed": by["failed"]}
-    logger.info("email pipeline clustering completed mailbox={} decision=ran", mailbox_id)
     return {"decision": "ran"}
 
 
@@ -288,46 +200,25 @@ def run_run_pipeline(
     allow_partial: bool,
     deps: PipelineDependencies,
 ) -> dict[str, Any]:
-    from loguru import logger
-
-    logger.info(
-        "email pipeline run started mailbox={} cluster_mode={} allow_partial={}",
-        mailbox_id,
-        cluster_mode,
-        allow_partial,
-    )
     summary: dict[str, Any] = {"mailbox": mailbox_id, "mode": "run"}
     deps.task_repository.reset_running_to_pending()
-    summary["ingestion"] = _run_ingestion(deps=deps, mailbox_id=mailbox_id)
+    summary["ingestion"] = _run_ingestion(
+        deps=deps, mailbox_id=mailbox_id
+    )
     normalization = _run_normalize_stage(deps=deps, mailbox_id=mailbox_id)
     summary["normalization"] = normalization
     if normalization["emails_failed"] > 0 and not allow_partial:
         summary["next_action"] = "fix_failed_tasks"
-        logger.info(
-            "email pipeline run stopped mailbox={} next_action={}",
-            mailbox_id,
-            summary["next_action"],
-        )
         return summary
     embeddings = _run_embed_stage(deps=deps, mailbox_id=mailbox_id)
     summary["embeddings"] = embeddings
     if embeddings["tasks_failed"] > 0:
         summary["next_action"] = "fix_failed_tasks"
-        logger.info(
-            "email pipeline run stopped mailbox={} next_action={}",
-            mailbox_id,
-            summary["next_action"],
-        )
         return summary
     summary["clustering"] = _decide_and_run_clustering(
         deps=deps, mailbox_id=mailbox_id, cluster_mode=cluster_mode
     )
     summary["next_action"] = _bootstrap_next_action(summary)
-    logger.info(
-        "email pipeline run completed mailbox={} next_action={}",
-        mailbox_id,
-        summary["next_action"],
-    )
     return summary
 
 

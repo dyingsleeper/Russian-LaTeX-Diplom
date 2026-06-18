@@ -26,6 +26,10 @@ def _normalize_label_name(raw: str) -> str:
     return _WHITESPACE_RE.sub(" ", raw.strip().lower())
 
 
+def _member_source(member_id: int, rep_ids: set[int]) -> str:
+    return "rep_direct" if member_id in rep_ids else "cluster_propagation"
+
+
 @dataclass(frozen=True)
 class ResolutionOutcome:
     class_label_id: int | None
@@ -66,8 +70,8 @@ def resolve_class_label(
             class_label_id=None,
             created_new=False,
             warning=(
-                f"normalized_email_id={response.normalized_email_id}: "
-                f"label='{NEW_CLASS_SENTINEL}' selected but proposed_new_class is empty"
+                f"email={response.normalized_email_id}: "
+                "new class selected without name"
             ),
         )
 
@@ -81,8 +85,8 @@ def resolve_class_label(
         class_label_id=None,
         created_new=False,
         warning=(
-            f"normalized_email_id={response.normalized_email_id}: "
-            f"label={response.label!r} is not a known class for mailbox={mailbox_id}"
+            f"email={response.normalized_email_id}: "
+            f"unknown label {response.label!r}"
         ),
     )
 
@@ -104,12 +108,6 @@ def aggregate_cluster_labels(
     rep_class_label_by_id: dict[int, int],
     cluster_member_ids: list[int],
 ) -> ClusterAggregation:
-    """Strict-mode propagation for one cluster.
-
-    rep_class_label_by_id maps normalized_email_id (of a labeled representative)
-    to its resolved class_label_id. cluster_member_ids is every normalized_email_id
-    in the cluster (including reps and non-reps).
-    """
     if not rep_class_label_by_id:
         return ClusterAggregation(
             cluster_id=cluster_id, disagreement=False, drafts=[]
@@ -136,15 +134,15 @@ def aggregate_cluster_labels(
     (consensus_label_id,) = distinct_labels
     rep_ids = set(rep_class_label_by_id)
     drafts = [
-        EmailLabelDraft(
-            normalized_email_id=member_id,
-            mailbox_id=mailbox_id,
-            class_label_id=consensus_label_id,
-            annotation_batch_id=annotation_batch_id,
-            source="rep_direct" if member_id in rep_ids else "cluster_propagation",
-            cluster_run_id=cluster_run_id,
-            cluster_id=cluster_id,
-        )
+            EmailLabelDraft(
+                normalized_email_id=member_id,
+                mailbox_id=mailbox_id,
+                class_label_id=consensus_label_id,
+                annotation_batch_id=annotation_batch_id,
+                source=_member_source(member_id, rep_ids),
+                cluster_run_id=cluster_run_id,
+                cluster_id=cluster_id,
+            )
         for member_id in cluster_member_ids
     ]
     return ClusterAggregation(
@@ -164,7 +162,11 @@ def import_annotations(
             "db_write_failed",
             f"annotation_batch {batch_id} not found",
         )
-    if batch.status == "imported" and batch.responses_imported >= batch.records_exported:
+    already_imported = (
+        batch.status == "imported"
+        and batch.responses_imported >= batch.records_exported
+    )
+    if already_imported:
         return ImportSummary(
             responses_total=batch.responses_imported,
             responses_skipped=0,
@@ -173,7 +175,7 @@ def import_annotations(
             clusters_disagreement=0,
             outliers_labeled=0,
             email_labels_written=batch.labels_propagated,
-            warnings=[f"batch {batch_id} already imported; nothing to do"],
+            warnings=[f"batch {batch_id} already imported"],
         )
 
     try:
@@ -193,9 +195,9 @@ def import_annotations(
     other_label = annotation_repository.ensure_system_other_label(
         mailbox_id=batch.mailbox_id
     )
+    list_labels = annotation_repository.list_class_labels
     labels_by_name = {
-        r.name: r
-        for r in annotation_repository.list_class_labels(mailbox_id=batch.mailbox_id)
+        r.name: r for r in list_labels(mailbox_id=batch.mailbox_id)
     }
     warnings: list[str] = []
     classes_new = 0
@@ -205,7 +207,9 @@ def import_annotations(
         try:
             normalized_email_id = int(raw["record_id"])
         except (TypeError, ValueError):
-            warnings.append(f"skip record_id={raw.get('record_id')!r}: not an integer")
+            warnings.append(
+                f"skip record_id={raw.get('record_id')!r}: not int"
+            )
             continue
         response = AnnotationResponse(
             normalized_email_id=normalized_email_id,
@@ -238,7 +242,9 @@ def import_annotations(
                     error_code="argilla_unreachable",
                     error_message=str(exc),
                 )
-                raise AnnotationError("argilla_unreachable", str(exc)) from exc
+                raise AnnotationError(
+                    "argilla_unreachable", str(exc)
+                ) from exc
         if outcome.class_label_id is None:
             continue
         resolved[normalized_email_id] = outcome.class_label_id
@@ -246,9 +252,10 @@ def import_annotations(
     responses_total = len(raw_responses)
     responses_skipped = responses_total - len(resolved)
 
-    rep_candidates = annotation_repository.list_cluster_assignments_for_export(
-        cluster_run_id=batch.cluster_run_id
+    list_assignments = (
+        annotation_repository.list_cluster_assignments_for_export
     )
+    rep_candidates = list_assignments(cluster_run_id=batch.cluster_run_id)
     rep_clusters: dict[int, list[int]] = {}
     outlier_ids: set[int] = set()
     for candidate in rep_candidates:
@@ -267,8 +274,13 @@ def import_annotations(
     for cluster_id, rep_ids in rep_clusters.items():
         if any(rep_id not in resolved for rep_id in rep_ids):
             continue
-        rep_class_label_by_id = {rep_id: resolved[rep_id] for rep_id in rep_ids}
-        member_ids = annotation_repository.list_normalized_email_ids_in_cluster(
+        rep_class_label_by_id = {
+            rep_id: resolved[rep_id] for rep_id in rep_ids
+        }
+        list_members = (
+            annotation_repository.list_normalized_email_ids_in_cluster
+        )
+        member_ids = list_members(
             cluster_run_id=batch.cluster_run_id, cluster_id=cluster_id
         )
         aggregation = aggregate_cluster_labels(
@@ -314,7 +326,9 @@ def import_annotations(
         raise AnnotationError("db_write_failed", str(exc)) from exc
 
     batch_complete = responses_total >= batch.records_exported
-    final_status: AnnotationBatchStatus = "imported" if batch_complete else "exported"
+    final_status: AnnotationBatchStatus = (
+        "imported" if batch_complete else "exported"
+    )
     annotation_repository.mark_batch_status(
         batch_id,
         status=final_status,

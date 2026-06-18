@@ -4,27 +4,40 @@ from collections.abc import Sequence
 from typing import Any
 
 
-def classification_metrics(y_true: Sequence[int], y_pred: Sequence[int]) -> dict[str, Any]:
-    from sklearn.metrics import accuracy_score, f1_score  # type: ignore[import-untyped]
+def classification_metrics(
+    y_true: Sequence[int], y_pred: Sequence[int]
+) -> dict[str, Any]:
+    from sklearn.metrics import accuracy_score, f1_score
 
     return {
         "accuracy": float(accuracy_score(y_true, y_pred)),
-        "macro_f1": float(f1_score(y_true, y_pred, average="macro", zero_division=0)),
-        "weighted_f1": float(f1_score(y_true, y_pred, average="weighted", zero_division=0)),
+        "macro_f1": float(
+            f1_score(y_true, y_pred, average="macro", zero_division=0)
+        ),
+        "weighted_f1": float(
+            f1_score(
+                y_true, y_pred, average="weighted", zero_division=0
+            )
+        ),
     }
 
 
-def coverage(predictions: Sequence[str], *, other_label: str = "other") -> float:
+def coverage(
+    predictions: Sequence[str], *, other_label: str = "other"
+) -> float:
     if not predictions:
         return 0.0
     accepted = sum(1 for p in predictions if p != other_label)
     return accepted / len(predictions)
 
 
-def other_rate(predictions: Sequence[str], *, other_label: str = "other") -> float:
+def other_rate(
+    predictions: Sequence[str], *, other_label: str = "other"
+) -> float:
     if not predictions:
         return 0.0
-    return sum(1 for p in predictions if p == other_label) / len(predictions)
+    other = sum(1 for p in predictions if p == other_label)
+    return other / len(predictions)
 
 
 def per_class_metrics(
@@ -71,17 +84,24 @@ def threshold_sweep(
         predictions: list[str] = []
         for probs in probabilities:
             best_index = max(range(len(probs)), key=lambda i: probs[i])
-            predictions.append(
-                labels[best_index] if probs[best_index] >= tau else other_label
-            )
+            label = labels[best_index]
+            if probs[best_index] >= tau:
+                predictions.append(label)
+            else:
+                predictions.append(other_label)
+        macro_f1 = f1_score(
+            y_true, predictions, average="macro", zero_division=0
+        )
         rows.append(
             {
                 "tau": tau,
-                "coverage": coverage(predictions, other_label=other_label),
-                "other_rate": other_rate(predictions, other_label=other_label),
-                "macro_f1": float(
-                    f1_score(y_true, predictions, average="macro", zero_division=0)
+                "coverage": coverage(
+                    predictions, other_label=other_label
                 ),
+                "other_rate": other_rate(
+                    predictions, other_label=other_label
+                ),
+                "macro_f1": float(macro_f1),
             }
         )
     return rows

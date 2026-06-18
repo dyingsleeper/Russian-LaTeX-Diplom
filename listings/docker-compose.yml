@@ -1,23 +1,4 @@
 services:
-#  app:
-#    build:
-#      context: .
-#      dockerfile: Dockerfile
-#    image: diplom-ai:local
-#    env_file:
-#      - .env
-#    environment:
-#      DIPLOM_AI_DATABASE_URL: postgresql://diplom_ai:diplom_ai@postgres:5432/diplom_ai
-#    depends_on:
-#      - postgres
-#    volumes:
-#      - ./src:/app/src:ro
-#      - ./configs:/app/configs:ro
-#      - ./data:/app/data
-#      - ./artifacts:/app/artifacts
-#      - ./logs:/app/logs
-#    command: ["diplom-ai", "info"]
-
   postgres:
     image: postgres:16-alpine
     environment:
@@ -55,7 +36,7 @@ services:
     environment:
       ARGILLA_ELASTICSEARCH: http://argilla-elastic:9200
       ARGILLA_REDIS_URL: redis://argilla-redis:6379/0
-      ARGILLA_AUTH_SECRET_KEY: "${DIPLOM_AI_ARGILLA_AUTH_SECRET:-changeme-32chars-min-key-rotate-me}"
+      ARGILLA_AUTH_SECRET_KEY: ${DIPLOM_AI_ARGILLA_AUTH_SECRET}
       USERNAME: "${DIPLOM_AI_ARGILLA_USERNAME:-argilla}"
       PASSWORD: "${DIPLOM_AI_ARGILLA_PASSWORD:-argilla1234}"
       API_KEY: "${DIPLOM_AI_ARGILLA_API_KEY:-argilla.apikey}"

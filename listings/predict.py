@@ -10,11 +10,13 @@ from diplom_ai.classifier.prototypes import l2_normalize
 
 @dataclass(frozen=True)
 class PrototypeMatrix:
-    vectors: np.ndarray          # (P, dim), L2-normalized
-    class_names: tuple[str, ...]  # length P, the class of each row
+    vectors: np.ndarray
+    class_names: tuple[str, ...]
 
 
-def build_prototype_matrix(prototypes: list[PrototypeWithClass]) -> PrototypeMatrix:
+def build_prototype_matrix(
+    prototypes: list[PrototypeWithClass],
+) -> PrototypeMatrix:
     if not prototypes:
         return PrototypeMatrix(
             vectors=np.zeros((0, 0), dtype=np.float32), class_names=()
@@ -23,7 +25,8 @@ def build_prototype_matrix(prototypes: list[PrototypeWithClass]) -> PrototypeMat
         [np.asarray(p.vector, dtype=np.float32) for p in prototypes]
     )
     names = tuple(p.class_name for p in prototypes)
-    return PrototypeMatrix(vectors=l2_normalize(vectors), class_names=names)
+    vectors = l2_normalize(vectors)
+    return PrototypeMatrix(vectors=vectors, class_names=names)
 
 
 def predict_one(
@@ -33,7 +36,6 @@ def predict_one(
     tau: float,
     other_label: str = "other",
 ) -> Prediction:
-    """Nearest-prototype prediction with a cosine acceptance threshold."""
     if matrix.vectors.shape[0] == 0:
         return Prediction(label=other_label, score=0.0, class_scores={})
 

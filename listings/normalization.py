@@ -4,7 +4,11 @@ import re
 import unicodedata
 from dataclasses import dataclass
 from diplom_ai.data.preprocessing import normalize_text
-from diplom_ai.email.contracts import NormalizedEmailDraft, RawEmailRecord, TextQuality
+from diplom_ai.email.contracts import (
+    NormalizedEmailDraft,
+    RawEmailRecord,
+    TextQuality,
+)
 from diplom_ai.email.parsing import extract_best_text, parse_email_bytes
 from diplom_ai.storage.repositories import EmailRepository
 
@@ -16,28 +20,39 @@ class NormalizeEmailsResult:
 
 
 _QUOTED_PRINTABLE_SOFT_BREAK = re.compile(r"=\r?\n")
-_HTML_ENTITY = re.compile(r"&(?:#\d+|#x[0-9a-fA-F]+|[a-zA-Z][a-zA-Z0-9]*);")
+_HTML_ENTITY = re.compile(
+    r"&(?:#\d+|#x[0-9a-fA-F]+|[a-zA-Z][a-zA-Z0-9]*);"
+)
 _REPEATED_SYMBOL = re.compile(r"([^\w\s])\1{2,}")
 _CSS_DECLARATION = re.compile(
-    r"(?i)\b(?:font-size|line-height|margin|padding|color|background|display|width|height)"
+    r"(?i)\b(?:font-size|line-height|margin|padding|color|"
+    r"background|display|width|height)"
     r"\s*:\s*[^;{}]+;?"
 )
-_CSS_BLOCK = re.compile(r"(?is)(?:@media\b[^{]*\{.*?\}|[.#]?[a-z0-9_-]+\s*\{[^{}]*\})")
+_CSS_BLOCK = re.compile(
+    r"(?is)(?:@media\b[^{]*\{.*?\}|"
+    r"[.#]?[a-z0-9_-]+\s*\{[^{}]*\})"
+)
 _FOOTER_PATTERNS = (
     re.compile(r"(?i)\bunsubscribe\b"),
     re.compile(r"(?i)\bmanage preferences\b"),
     re.compile(r"(?i)\bprivacy policy\b"),
     re.compile(r"(?i)\bview (?:this email )?in (?:your )?browser\b"),
-    re.compile(r"(?i)\byou (?:are receiving|received) (?:this email|this message)\b"),
+    re.compile(
+        r"(?i)\byou (?:are receiving|received) "
+        r"(?:this email|this message)\b"
+    ),
     re.compile(r"(?i)\bthis email was sent\b"),
     re.compile(r"(?i)\bотписаться\b"),
     re.compile(r"(?i)\bуправлени[ея] подписк"),
-    re.compile(r"(?i)\bполитик[аи] конфиденциальности\b"),
+    re.compile(r"(?i)\bполитик[аи] конфиденц"),
     re.compile(r"(?i)\bписьмо отправлено\b"),
 )
 
 
-def normalize_raw_email(raw_email: RawEmailRecord) -> NormalizedEmailDraft:
+def normalize_raw_email(
+    raw_email: RawEmailRecord,
+) -> NormalizedEmailDraft:
     raw_bytes = raw_email.raw_mime_path.read_bytes()
     parsed = parse_email_bytes(raw_bytes)
     subject = normalize_text(parsed.subject or raw_email.subject_raw)
@@ -122,11 +137,15 @@ def _clean_email_body(text: str) -> str:
 
 
 def _strip_invisible_unicode(text: str) -> str:
-    return "".join(char for char in text if unicodedata.category(char) != "Cf")
+    return "".join(
+        char for char in text if unicodedata.category(char) != "Cf"
+    )
 
 
 def _strip_emoji(text: str) -> str:
-    return "".join(char for char in text if not _is_emoji_or_decorative(char))
+    return "".join(
+        char for char in text if not _is_emoji_or_decorative(char)
+    )
 
 
 def _is_emoji_or_decorative(char: str) -> bool:
@@ -164,12 +183,19 @@ def _is_reply_boundary(lowered_line: str) -> bool:
         or lowered_line.endswith(" пишет:")
         or lowered_line.startswith("-----original message-----")
         or lowered_line.startswith("----- forwarded message -----")
-        or lowered_line.startswith("пересылаемое сообщение")
+        or lowered_line.startswith("пересылаемое")
     )
 
 
 def _is_signature_boundary(lowered_line: str) -> bool:
-    return lowered_line in {"--", "regards", "best regards", "kind regards", "с уважением"} or (
+    simple = {
+        "--",
+        "regards",
+        "best regards",
+        "kind regards",
+        "с уважением",
+    }
+    return lowered_line in simple or (
         lowered_line.startswith("best regards,")
         or lowered_line.startswith("regards,")
         or lowered_line.startswith("kind regards,")
@@ -187,13 +213,19 @@ def _is_css_noise_line(line: str) -> bool:
         return True
     css_markers = sum(
         marker in lowered
-        for marker in ("font-size", "line-height", "padding", "margin", "{", "}")
+        for marker in (
+            "font-size", "line-height", "padding", "margin", "{", "}"
+        )
     )
     return css_markers >= 2
 
 
 def _detect_language(text: str) -> str:
-    cyrillic = sum(1 for char in text if "а" <= char.lower() <= "я" or char.lower() == "ё")
+    cyrillic = sum(
+        1
+        for char in text
+        if "а" <= char.lower() <= "я" or char.lower() == "ё"
+    )
     latin = sum(1 for char in text if "a" <= char.lower() <= "z")
     if cyrillic == 0 and latin == 0:
         return "unknown"
