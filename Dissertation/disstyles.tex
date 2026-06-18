@@ -13,7 +13,7 @@
 %% И правит сразу и в таблицах (если со звёздочкой)
 %\DoubleSpacing*     % Двойной интервал
 \OnehalfSpacing*    % Полуторный интервал
-%\setSpacing{1.42}   % Полуторный интервал, подобный Ворду (возможно, стоит включать вместе с предыдущей строкой)
+\setSpacing{1.42}   % Полуторный интервал, подобный Ворду (возможно, стоит включать вместе с предыдущей строкой)
 
 %%% Макет страницы %%%
 % Выставляем значения полей (ГОСТ 7.0.11-2011, 5.3.7)
@@ -39,7 +39,7 @@
 
 %%% Блок управления параметрами для выравнивания заголовков в тексте %%%
 \newlength{\otstuplen}
-\setlength{\otstuplen}{\theotstup\parindent}
+\setlength{\otstuplen}{1.25cm}
 \ifnumequal{\value{headingalign}}{0}{% выравнивание заголовков в тексте
     \newcommand{\hdngalign}{\centering}                % по центру
     \newcommand{\hdngaligni}{}% по центру
@@ -143,7 +143,7 @@
 \setsubsubsecheadstyle{\basegostsectionfont\hdngalign}
 \setsubsubsecindent{\otstuplen}
 
-\sethangfrom{#1} % заголовки начинаются с заданного абзацного отступа
+\sethangfrom{\noindent#1} % заголовки начинаются с заданного абзацного отступа
 
 \ifnumequal{\value{chapstyle}}{1}{%
     \chapterstyle{thesisgostchapname}
